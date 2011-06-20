@@ -11,14 +11,13 @@ setup(
     author_email="paul@scifiware.com",
     description=("app engine skeleton"),
     license="Proprietary. This code has been stolen.",
-
     packages=find_packages(),
     package_dir = {'': 'app'},
     include_package_data=True,
     install_requires=[
         'flask',
         'jinja2',
-        'Werkzeug',
+        'werkzeug>=0.6.1',
 #        'werkzeug-debugger-appengine',
         'distribute',
     ],
