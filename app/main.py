@@ -12,7 +12,7 @@ from app import app
 from wsgiref.handlers import CGIHandler
 
 
-DEBUG_MODE = False
+DEBUG_MODE = True
 
 
 def main():
