@@ -18,8 +18,8 @@ setup(
     install_requires=[
         'flask',
         'jinja2',
-        'werkzeug',
-        'werkzeug-debugger-appengine',
+        'Werkzeug',
+#        'werkzeug-debugger-appengine',
         'distribute',
     ],
     zip_safe=False,
