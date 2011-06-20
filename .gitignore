@@ -1,0 +1,10 @@
+*.pyc
+*.pyo
+.installed.cfg
+bin/
+develop-eggs/
+eggs/
+downloads/
+parts/
+var/
+
