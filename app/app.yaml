@@ -1,0 +1,7 @@
+application: myflaskonappengineapp
+version: 1
+runtime: python
+api_version: 1
+
+- url: .*
+  script: main.py
