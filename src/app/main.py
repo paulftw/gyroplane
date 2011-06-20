@@ -1,13 +1,15 @@
 """
 main.py
 
-App Engine entry point
-
+App Engine entry point.
 """
 
+
+from app import app
 from wsgiref.handlers import CGIHandler
 
-DEBUG_MODE = True
+
+DEBUG_MODE = False
 
 
 def main():
