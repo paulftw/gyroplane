@@ -1,5 +1,5 @@
-Project template to start an AppEngine project.
-Goal: quick and easy setup of all of the following
+Project template for AppEngine.
+Offers quick and easy setup of all of the following:
 - buildout
 - AppEngine SDK
 - flask framework
