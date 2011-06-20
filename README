@@ -1,0 +1,6 @@
+Project template to start an AppEngine project.
+Goal: quick and easy setup of all of the following
+- buildout
+- AppEngine SDK
+- flask framework
+- unit tests
