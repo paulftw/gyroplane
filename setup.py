@@ -10,6 +10,7 @@ setup(
     author="Paul Korzhyk",
     author_email="paul@scifiware.com",
     description="app engine skeleton",
+    url='',
     packages=find_packages('app'),
     package_dir = {'': 'app'},
     include_package_data=True,
