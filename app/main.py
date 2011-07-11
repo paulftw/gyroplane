@@ -12,11 +12,8 @@ from app import app
 from wsgiref.handlers import CGIHandler
 
 
-DEBUG_MODE = True
-
-
 def main():
-    if DEBUG_MODE:
+    if app.config['DEBUG']:
         # Run debugged app
         from werkzeug_debugger_appengine import get_debugged_app
         app.debug=True

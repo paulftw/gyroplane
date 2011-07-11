@@ -1,7 +1,12 @@
 <title>
   Heloo!
 </title>
+<body>
+{% for message in get_flashed_messages() %}
+  <p class=message>{{ message }}
+{% endfor %}
 
 <h4>
   {{ session }}
 </h4>
+</body>
