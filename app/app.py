@@ -2,13 +2,18 @@ from flask import Flask, session, render_template
 
 app = Flask(__name__)
 
-import user
+import fbsdk
+
+from secrets import configure_secrets
+configure_secrets(app)
 
 app.config.update(
-    SECRET_KEY = 'g5498ug456ikt54',
-    DEBUG = True
+    DEBUG = True,
 )
+
+app.config.update(
+
 
 @app.route("/")
 def hello():
-    return render_template('index.html', session=dir(session))
+    return render_template('index.html', debug=dir(session))

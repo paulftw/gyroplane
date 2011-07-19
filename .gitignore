@@ -1,6 +1,7 @@
 *.pyc
 *.pyo
 *.egg-info/
+app/secrets.py
 app/libs/
 .installed.cfg
 bin/
