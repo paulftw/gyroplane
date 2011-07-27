@@ -1,19 +1,29 @@
-from flask import Flask, session, render_template
+from flask import Flask, render_template, request
+import datetime
+from gaesessions import SessionMiddleware, get_current_session
+
+from secrets import COOKIE_KEY
+import etudes.users
+from etudes.facebook import fbconnect
 
 app = Flask(__name__)
 
-import fbsdk
+# Enable gae-sessions
+app.wsgi_app = SessionMiddleware(app.wsgi_app, cookie_key=COOKIE_KEY,
+                                 lifetime=datetime.timedelta(days=31))
 
-from secrets import configure_secrets
-configure_secrets(app)
+# Switch to debug mode
+app.config.update(DEBUG = False)
 
-app.config.update(
-    DEBUG = True,
-)
 
-app.config.update(
-
+# Register blueprints
+app.register_blueprint(fbconnect)
 
 @app.route("/")
-def hello():
-    return render_template('index.html', debug=dir(session))
+def homepage():
+    session = get_current_session()
+    if session.has_key('counter'):
+        session['counter'] += 1
+    else:
+        session['counter'] = 100
+    return render_template('index.html', debug = [session['counter'], __name__])
