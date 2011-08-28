@@ -7,6 +7,7 @@ fbconnect = Blueprint('fbconnect', __name__, template_folder='templates')
 @fbconnect.route('/fbpage', methods=['GET'])
 def fbpage():
     return render_template('fbpage.html', 
+                           cookies=request.cookies,
                            fb_appId=secrets.FB_APPID, 
                            fb_user=fb_user())
 

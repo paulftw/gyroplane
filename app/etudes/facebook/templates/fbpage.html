@@ -5,8 +5,11 @@
     <title>Facebook Example</title>
   </head>
   <body>
-    <fb:login-button autologoutlink="true"></fb:login-button>
+  
+  
+    <fb:login-button autologoutlink="true"></fb:login-button><br/>
 
+      Cookies: {{ cookies }}<br/><br/>
       User: {{ fb_user }}
 
     {% if fb_user %}
@@ -31,5 +34,7 @@
         document.getElementById('fb-root').appendChild(e);
       }());
     </script>
+    
+    
   </body>
 </html>
