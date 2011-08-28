@@ -13,7 +13,7 @@ app.wsgi_app = SessionMiddleware(app.wsgi_app, cookie_key=COOKIE_KEY,
                                  lifetime=datetime.timedelta(days=31))
 
 # Switch to debug mode
-app.config.update(DEBUG = False)
+app.config.update(DEBUG = True)
 
 
 # Register blueprints
