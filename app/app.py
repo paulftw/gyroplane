@@ -1,9 +1,10 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, url_for
 import datetime
-from gaesessions import SessionMiddleware, get_current_session
+from gaesessions import SessionMiddleware
+from etudes.profile import gaeprofiles
+from etudes.profile import get_current_profile
 
 from secrets import COOKIE_KEY
-import etudes.users
 from etudes.facebook import fbconnect
 
 app = Flask(__name__)
@@ -18,12 +19,15 @@ app.config.update(DEBUG = True)
 
 # Register blueprints
 app.register_blueprint(fbconnect)
+app.register_blueprint(gaeprofiles)
+
+app.add_url_rule('/favicon.ico',
+                 redirect_to=url_for('static', filename='hellokitty.ico'))
 
 @app.route("/")
 def homepage():
-    session = get_current_session()
-    if session.has_key('counter'):
-        session['counter'] += 1
-    else:
-        session['counter'] = 100
-    return render_template('index.html', debug = [session['counter'], __name__])
+    profile = get_current_profile()
+    return render_template('index.html', 
+                           debug = [
+                                    "G'day, %s!" % (profile.get_first_name()),
+                           ])
