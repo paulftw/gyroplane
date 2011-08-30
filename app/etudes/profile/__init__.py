@@ -2,16 +2,18 @@
     User profile
 """ 
 
-from flask import Blueprint, request
+from flask import Blueprint
 import gaesessions
+import logging
 from google.appengine.ext import db
 from datetime import datetime, timedelta
 
 gaeprofiles = Blueprint('gaeprofiles', __name__)
 
-@gaeprofiles.after_request
-def persist_profile():
+@gaeprofiles.after_app_request
+def persist_profile(response):
     get_current_profile().save()
+    return response
 
 PROFILE_KEY = 'PK_profile_id'
 
