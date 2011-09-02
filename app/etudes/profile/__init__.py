@@ -3,17 +3,37 @@
 """ 
 
 from flask import Blueprint
+from werkzeug import cached_property
 import gaesessions
 import logging
 from google.appengine.ext import db
 from datetime import datetime, timedelta
 
-gaeprofiles = Blueprint('gaeprofiles', __name__)
+class ProfilesBlueprint(Blueprint):
+    
+    def __init__(self, *args, **kwargs):
+        Blueprint.__init__(self, *args, **kwargs)
+
+    @cached_property
+    def current_profile(self):
+        session = gaesessions.get_current_session()
+        profile = None
+        if session.has_key(PROFILE_KEY):
+            profile = load_or_create(session[PROFILE_KEY])
+        else:
+            profile = create_profile()
+        session[PROFILE_KEY] = profile.get_id()
+        return profile
+    
+    
+gaeprofiles = ProfilesBlueprint('gaeprofiles', __name__)
+
 
 @gaeprofiles.after_app_request
 def persist_profile(response):
-    get_current_profile().save()
+    gaeprofiles.current_profile.save()
     return response
+
 
 PROFILE_KEY = 'PK_profile_id'
 
@@ -68,19 +88,8 @@ class Profile(db.Expando):
 def create_profile():
     profile = Profile()
     profile.put()
-    profile.name = 'Guest' + str(profile.get_id())
+    profile.name = 'Guest ' + str(profile.get_id())
     profile.dirty = True
-    return profile
-
-
-def get_current_profile():
-    session = gaesessions.get_current_session()
-    profile = None
-    if session.has_key(PROFILE_KEY):
-        profile = load_or_create(session[PROFILE_KEY])
-    else:
-        profile = create_profile()
-    session[PROFILE_KEY] = profile.get_id()
     return profile
 
 

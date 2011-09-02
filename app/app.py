@@ -4,7 +4,6 @@ import os
 import logging
 from gaesessions import SessionMiddleware
 from etudes.profile import gaeprofiles
-from etudes.profile import get_current_profile
 
 from secrets import COOKIE_KEY
 from etudes.facebook import fbconnect
@@ -33,7 +32,7 @@ def favicon():
 
 @app.route("/")
 def homepage():
-    profile = get_current_profile()
+    profile = gaeprofiles.current_profile
     return render_template('index.html', 
                            debug = [
                                     "first name: %s!" % (profile.get_first_name()),

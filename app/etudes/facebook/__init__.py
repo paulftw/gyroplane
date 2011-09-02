@@ -1,5 +1,5 @@
-from flask import Blueprint, render_template
-from etudes.profile import get_current_profile
+from flask import Blueprint, render_template, request
+from etudes.profile import gaeprofiles
 import facebook
 import secrets
 
@@ -7,13 +7,15 @@ fbconnect = Blueprint('fbconnect', __name__, template_folder='templates')
 
 @fbconnect.route('/fbpage', methods=['GET'])
 def fbpage():
-    fbuser = get_user(get_access_token(get_api_cookie()))
+    cookies = request.cookies
+    token = get_access_token(get_api_cookie(cookies))
+    fbuser = get_user(token)
     if fbuser != None:
-        populate_profile()
+        populate_profile(fbuser, token)
     return render_template('fbpage.html', 
-                           cookies=request.cookies,
+                           cookies=cookies,
                            fb_appId=secrets.FB_APPID, 
-                           fb_user=fb_user())
+                           fb_user=fbuser)
 
 
 def get_api_cookie(request_cookies):
@@ -30,25 +32,18 @@ def get_access_token(cookie):
 
 def get_user(access_token):
     if access_token:
-        # Store a local instance of the user data so we don't need
-        # a round-trip to Facebook on every request
-        graph = facebook.GraphAPI()
+        graph = facebook.GraphAPI(access_token)
         profile = graph.get_object("me")
-        user = dict(id=str(profile["id"]),
-                    name=profile["name"],
-                    profile_url=profile["link"],
-                    access_token=cookie["access_token"])
-        return user
+        return profile
     return None
 
 
-def populate_profile(access_token):
-    user = get_user(access_token)
-    profile = get_current_profile()
+def populate_profile(fbuser, access_token):
+    profile = gaeprofiles.current_profile
     
-    profile.fb_id = user["id"]
+    profile.fb_id = fbuser["id"]
     profile.fb_token = access_token
     
-    profile.first_name = user["first_name"]
-    profile.last_name = user["name"]
+    profile.first_name = fbuser["first_name"]
+    profile.last_name = fbuser["name"]
 
