@@ -6,7 +6,7 @@ from gaesessions import SessionMiddleware
 from etudes.profile import gaeprofiles
 
 from secrets import COOKIE_KEY
-from etudes.facebook import fbconnect
+from etudes.facebook import fbprint, fbconnector
 
 app = Flask(__name__)
 
@@ -19,7 +19,7 @@ app.config.update(DEBUG = True)
 
 
 # Register blueprints
-app.register_blueprint(fbconnect)
+app.register_blueprint(fbprint)
 app.register_blueprint(gaeprofiles)
 
 
