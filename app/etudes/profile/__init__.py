@@ -92,29 +92,36 @@ class ProfilesBlueprint(Blueprint):
     def serialize_key(self, method, key):
         return KEY_PATTERN % (method, key)
     
-    def deserialize_key(self, key_str):
-        indx = key_str.find(KEY_DELIMITER)
+    def deserialize_key(self, key):
+        str_key = str(key)
+        indx = str_key.find(KEY_DELIMITER)
         if indx < 0:
-            return ('', key_str)
+            return ('', key)
         else:
-            return (key_str[:indx], key_str[indx + len(KEY_DELIMITER):])
+            return (str_key[:indx], str_key[indx + len(KEY_DELIMITER):])
     
     def load_or_create_profile(self, key):
-        profile = Profile.get_or_insert(key)
+        if isinstance(key, (int, long)):
+            profile = Profile.get_by_id(key)
+        else:
+            profile = Profile.get_or_insert(key)
         if profile.last_login_time == None:
             self.get_method(key).populate_profile(profile)
         return profile
     
     def get_method(self, key):
         mk = self.deserialize_key(key)
-        return self.methods[mk[0]]
+        if mk[0] == '':
+            return self.default_method
+        else:
+            return self.methods[mk[0]]
         
             
 gaeprofiles = ProfilesBlueprint({}, 'gaeprofiles', __name__)
 
 @gaeprofiles.after_app_request
 def persist_profile(response):
-    gaeprofiles.current_profile.save()
+    gaeprofiles.current_profile().save()
     return response
 
 

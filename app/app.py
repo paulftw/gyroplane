@@ -6,7 +6,7 @@ from gaesessions import SessionMiddleware
 from etudes.profile import gaeprofiles
 
 from secrets import COOKIE_KEY
-from etudes.facebook import fbprint, fbconnector
+from etudes.facebook import fbprint
 
 app = Flask(__name__)
 
@@ -32,8 +32,8 @@ def favicon():
 
 @app.route("/")
 def homepage():
-    profile = gaeprofiles.current_profile
+    profile = gaeprofiles.current_profile()
     return render_template('index.html', 
                            debug = [
-                                    "first name: %s!" % (profile.get_first_name()),
+                                    "first name: %s!" % profile.first_name,
                            ])
