@@ -2,8 +2,8 @@ from flask import Flask, render_template, send_from_directory
 import datetime
 import os
 import logging
-from gaesessions import SessionMiddleware
-from etudes.profile import gaeprofiles
+from etudes.profile import gaeprofiles, decorate_wsgi_app
+import gaesessions
 
 from secrets import COOKIE_KEY
 from etudes.facebook import fbprint
@@ -11,7 +11,7 @@ from etudes.facebook import fbprint
 app = Flask(__name__)
 
 # Enable gae-sessions
-app.wsgi_app = SessionMiddleware(app.wsgi_app, cookie_key=COOKIE_KEY,
+app.wsgi_app = decorate_wsgi_app(app.wsgi_app, cookie_key=COOKIE_KEY,
                                  lifetime=datetime.timedelta(days=31))
 
 # Switch to debug mode
@@ -32,8 +32,8 @@ def favicon():
 
 @app.route("/")
 def homepage():
-    profile = gaeprofiles.current_profile()
+    profile = gaesessions.get_current_session().profile
     return render_template('index.html', 
                            debug = [
-                                    "first name: %s!" % profile.first_name,
+                                    profile.__dict__,
                            ])
