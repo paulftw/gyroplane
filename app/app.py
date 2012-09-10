@@ -6,7 +6,6 @@ from etudes.profile import gaeprofiles, decorate_wsgi_app
 import gaesessions
 
 from secrets import COOKIE_KEY
-from etudes.facebook import fbprint
 
 app = Flask(__name__)
 
@@ -19,7 +18,6 @@ app.config.update(DEBUG = True)
 
 
 # Register blueprints
-app.register_blueprint(fbprint)
 app.register_blueprint(gaeprofiles)
 
 
