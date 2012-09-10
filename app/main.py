@@ -4,18 +4,17 @@ main.py
 App Engine entry point.
 """
 
-
-from app import app
-from wsgiref.handlers import CGIHandler
-
-
-DEBUG_MODE = True
+import sys
+sys.path.insert(0, './libs')
+sys.path.insert(0, './libs.zip')
 
 
 def main():
-    if DEBUG_MODE:
+    from app import app
+    if app.config['DEBUG']:
         # Run debugged app
         from werkzeug_debugger_appengine import get_debugged_app
+        from wsgiref.handlers import CGIHandler
         app.debug=True
         debugged_app = get_debugged_app(app)
         CGIHandler().run(debugged_app)
@@ -28,3 +27,4 @@ def main():
 # Use App Engine app caching
 if __name__ == "__main__":
     main()
+

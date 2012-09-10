@@ -17,8 +17,6 @@ setup(
         'flask',
         'jinja2',
         'werkzeug',
-        'werkzeug_debugger_appengine',
-        'distribute',
     ],
     zip_safe=False,
 )

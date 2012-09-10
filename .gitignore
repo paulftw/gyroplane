@@ -1,11 +1,19 @@
+app/secrets.py
+
 *.pyc
 *.pyo
-*.egg-info/
+
+.project
+.pydevproject
+.settings/
+
 .installed.cfg
+*.egg-info/
+app/libs/
 bin/
 develop-eggs/
-eggs/
 downloads/
+eggs/
 parts/
 var/
 
