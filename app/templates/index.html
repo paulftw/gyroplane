@@ -3,10 +3,17 @@
 </title>
 <body>
 {% for message in get_flashed_messages() %}
-  <p class=message>{{ message }}
+  <p class=message>{{ message }}</p>
 {% endfor %}
+<br/>
 
-<h4>
-  {{ debug }}
-</h4>
+<ol>
+{% for o in debug %}
+  <li>
+  {% for k, v in o.items() %}
+    {{ k }} -> {{ v }}<br/>
+  {% endfor %}
+  </li>
+{% endfor %}
+</ol>
 </body>
