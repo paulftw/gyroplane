@@ -2,7 +2,12 @@ application: uts-oac
 version: 2
 runtime: python27
 api_version: 1
+threadsafe: no
+
+libraries:                                                                      
+- name: markupsafe                                                              
+  version: latest 
 
 handlers:
 - url: .*
-  script: main.py
+  script: app.app

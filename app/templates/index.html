@@ -2,6 +2,7 @@
   Heloo!
 </title>
 <body>
+<h1>Index.html</h1>
 {% for message in get_flashed_messages() %}
   <p class=message>{{ message }}</p>
 {% endfor %}
@@ -10,9 +11,7 @@
 <ol>
 {% for o in debug %}
   <li>
-  {% for k, v in o.items() %}
-    {{ k }} -> {{ v }}<br/>
-  {% endfor %}
+    {{ o }}<br/>
   </li>
 {% endfor %}
 </ol>

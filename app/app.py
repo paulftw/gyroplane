@@ -1,21 +1,33 @@
+"""
+app.py
+
+App Engine entry point and the Flask App object.
+"""
+
+import sys
+sys.path.insert(0, './libs')
+sys.path.insert(0, './libs.zip')
+
 from flask import Flask, render_template, request, send_from_directory
-import datetime
+from flask.ext import security
+from flask.ext.security import Security
+from google.appengine.ext import db
 import os
 import logging
-#from etudes.profile import decorate_app
-#import gaesessions
+
+
+
+# GAE WSGI requires this object to be named app. Configurable in app.yaml
+app = Flask(__name__)
+
+# Switch to debug mode if we run on a dev_sever
+app.config.update(
+    DEBUG = os.environ['SERVER_SOFTWARE'].startswith('Development'))
 
 from secrets import COOKIE_KEY
-app = Flask(__name__)
 app.secret_key = COOKIE_KEY
 
-# Enable gae-sessions
-#app.wsgi_app = decorate_app(app.wsgi_app, cookie_key=COOKIE_KEY,
-#                                 lifetime=datetime.timedelta(days=31))
 
-from flask.ext.security import User, Security, login_required, roles_accepted, datastore, login_user
-
-from google.appengine.ext import db
 class User(db.Model):
     username = db.StringProperty()
     email = db.StringProperty()
@@ -29,7 +41,7 @@ class Role(db.Model):
     name = db.StringProperty()
     description = db.StringProperty()
 
-class MySec(datastore.UserDatastore):
+class MySecDatastore(security.datastore.UserDatastore):
     def __init__(self):
         pass
 
@@ -50,13 +62,8 @@ class MySec(datastore.UserDatastore):
     def _do_find_role(self, role):
         return Role.gql("where name = :1", role).get()
 
-
-Security(app, MySec())
-
-
-# Switch to debug mode
-app.config.update(
-    DEBUG = os.environ['SERVER_SOFTWARE'].startswith('Development'))
+# create and register flask.Security extension
+Security(app, MySecDatastore())
 
 
 @app.route('/favicon.ico')
@@ -68,24 +75,24 @@ def favicon():
 
 @app.route("/")
 def homepage():
-    return "this is homepage"
     return render_template('index.html', 
                            debug = [
-                                    (),
+                                    'info',
                            ])
+
 
 @app.route("/login", methods=['GET', 'POST'])
 def login():
     if request.method == 'GET':
         next = request.values.get('next', '/')
-        return render_template('login.html',
-                               next=request.environ.keys())
+        return render_template('security/login.html',
+                               next=next)
     elif request.method == 'POST':
         u = User(email=request.values.get('email'))
-        login_user(u)
+        security.login_user(u)
 
 
 @app.route("/secret")
-@login_required
+@security.login_required
 def secret():
-    return "login form"
+    return "secret page for logged in users"
