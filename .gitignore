@@ -17,3 +17,6 @@ eggs/
 parts/
 var/
 
+.idea/
+.DS_Store
+
