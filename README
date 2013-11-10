@@ -1,6 +1,42 @@
-Project template for AppEngine.
+Project template for AppEngine
+
 Offers quick and easy setup of all of the following:
 - buildout
 - AppEngine SDK
 - flask framework
 - unit tests
+
+
+Unlike most alternatives, this boilerplate relies heavily on buildout. Source code of the dependencies is never stored inside your project.
+This template contains everything necessary for a basic website or a webapp, yet tries to remain as small and flexible as possible.
+
+
+Getting Started
+
+1. Clone the repository:
+
+# git pull https://github.com/paulftw/appengine-flask-template.gitmycoolwebsite
+
+
+2. Virtualenv is not required but highly recommended, because it's awesome. I'm using virtualenvwrapper, so:
+
+# mkvirtualenv mycoolwebsite
+# workon mycoolwebsite
+
+
+3. Fetch buildout and install all dependencies:
+
+# python bootstrap.py -v 1.7.0
+# bin/buildout
+
+
+4. Start a dev server
+
+# bin/dev_appserver app
+and open http://localhost:8080/ in your browser
+
+
+5. ???
+
+
+6. Profit!
