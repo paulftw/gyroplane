@@ -7,8 +7,25 @@ Offers quick and easy setup of all of the following:
 - unit tests
 
 
-Unlike most alternatives, this boilerplate relies heavily on buildout. Source code of the dependencies is never stored inside your project.
-This template contains everything necessary for a basic website or a webapp, yet tries to remain as small and flexible as possible.
+Why create yet another boilerplate?
+
+There are two good alternatives you should check out:
+- http://gae-init.appspot.com/
+- https://github.com/kamalgill/flask-appengine-template
+
+Those two copy source code of all the dependencies into their repositories.
+I didn't like that approach because it felt wrong - upgrades are hard,
+commit logs are noisy, there's existing infrastructure and tools for
+distribution of Python packages.
+
+Alternatives also package in jQuery, Bootstrap and other front-end stuff.
+I think there are more appropriate ways to manage JS libs:
+Bower, Grunt, Yeoman.
+appengine-flask-template focuses on the server-side.
+
+This boilerplate intends to always remain as small and flexible as possible.
+Just like Flask (maybe a bit more bloated - sessions, security and OAuth are
+used by pretty much any website in this Web2.0 era).
 
 
 Getting Started
@@ -18,7 +35,8 @@ Getting Started
 # git clone https://github.com/paulftw/appengine-flask-template.git mycoolwebsite
 
 
-2. Virtualenv is not required but highly recommended, because it's awesome. I'm using virtualenvwrapper, so:
+2. Virtualenv is not required but highly recommended, because it's awesome.
+I'm using virtualenvwrapper, so:
 
 # mkvirtualenv mycoolwebsite
 # workon mycoolwebsite
