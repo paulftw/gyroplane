@@ -15,7 +15,7 @@ Getting Started
 
 1. Clone the repository:
 
-# git pull https://github.com/paulftw/appengine-flask-template.gitmycoolwebsite
+# git clone https://github.com/paulftw/appengine-flask-template.git mycoolwebsite
 
 
 2. Virtualenv is not required but highly recommended, because it's awesome. I'm using virtualenvwrapper, so:
