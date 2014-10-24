@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <link rel="stylesheet" href="/static/bower_components/bootstrap/dist/css/bootstrap.css">
+        <link rel="stylesheet" href="/static/bower_components/fontawesome/css/font-awesome.min.css">
+        <link rel="stylesheet" href="/static/AdminLTE/css/AdminLTE.css">
+        <link rel="stylesheet" href="/static/admin/main.css">
+    </head>
+
+    <body ng-app="gyro" ng-controller="Fiddler" class="skin-blue">
+
+    <header class="header">
+        <a href="/" class="logo">
+            <!-- Add the class icon to your logo image or logo icon to add the margining -->
+            {{ debug or "Gyroplane" }}
+        </a>
+        {%  raw %}
+        <nav role="navigation" class="navbar navbar-static-top">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+
+            </div>
+
+            <div class="collapse navbar-collapse">
+                <ul class="nav navbar-nav">
+                    <li><a href="#"><i class="fa fa-play"></i> Run</a></li>
+                    <li><a ng-click="save()"><i class="fa fa-pencil"></i> Save</a></li>
+                </ul>
+                <ul class="nav navbar-nav navbar-right">
+                    <li><a href="#">Login/Sign Up</a></li>
+                </ul>
+            </div>
+        </nav>
+    </header>
+
+    <div class="wrapper row-offcanvas row-offcanvas-left ng-cloak">
+        <aside class="left-side sidebar-offcanvas">
+            <section class="sidebar">
+
+                <!-- search form -->
+                <form action="#" method="get" class="sidebar-form">
+                    <div class="input-group">
+                        <input type="text" name="q" class="form-control" placeholder="Search...">
+                        <span class="input-group-btn">
+                            <button type="submit" name="seach" id="search-btn" class="btn btn-flat"><i class="fa fa-search"></i></button>
+                        </span>
+                    </div>
+                </form>
+                <!-- /.search form -->
+
+                <!-- sidebar menu: : style can be found in sidebar.less -->
+                <ul class="sidebar-menu">
+
+                    <li class="treeview">
+                        <a href="#">
+                            <i class="fa fa-cog"></i>
+                            <span>Site Options</span>
+                            <i class="fa fa-fw fa-angle-left pull-right rotate-when-active"></i>
+                        </a>
+                    </li>
+                    <li class="treeview tree-browser {{ expanded_files && 'active' }}">
+                        <a href="#" ng-click="expanded_files = !expanded_files">
+                            <i class="fa fa-folder"></i>
+                            <span>Files</span>
+                            <i class="fa fa-fw fa-angle-left pull-right rotate-when-active"></i>
+                        </a>
+                        <ul class="treeview-menu">
+                            <li class="active"><a href="#"><i class="fa fa-file-code-o"></i> main.py</a></li>
+                            <li><a href="#"><i class="fa fa-file-code-o"></i> index.html</a></li>
+                            <li><a href="#"><i class="fa fa-file-code-o"></i> main.less</a></li>
+                            <li><a href="#"><i class="fa fa-file-code-o"></i> main.js</a></li>
+                        </ul>
+                    </li>
+                    <li class="treeview tree-browser {{ expanded_database && 'active' }}">
+                        <a href="#" ng-click="expanded_database = !expanded_database">
+                            <i class="fa fa-database"></i>
+                            <span>Database</span>
+                            <i class="fa fa-fw fa-angle-left pull-right rotate-when-active"></i>
+                        </a>
+                        <ul class="treeview-menu">
+                            <li><a href="#"><i class="fa fa-table"></i> Users</a></li>
+                            <li><a href="#"><i class="fa fa-table"></i> Sessions</a></li>
+                            <li><a href="#"><i class="fa fa-table"></i> Games</a></li>
+                            <li><a href="#"><i class="fa fa-table"></i> Messages</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </section>
+        </aside>
+        <aside class="right-side">
+            <section class="content">
+
+                <div class="col-md-6">
+                    <div class="box box-primary">
+                        <!-- <div class="box-body"> -->
+                            <div class="box-body" ng-model="files['main.py']" ui-ace="{
+                                    theme: 'tomorrow',
+                                    mode: 'python',
+                                    showGutter: true,
+                                }">Ace editor still loading...</div>
+                        <!-- </div> -->
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="box box-primary">
+                        <div class="box-body">
+                            {{ fiddle_id }}
+                            <iframe class="preview" ng-src="{{ iframe_url }}">
+                            </iframe>
+
+                            <p>
+                                {{ url_prefix() }}
+                                <input type="text" ng-model="url_suffix"/>
+                                <i class="fa fa-fw fa-arrow-circle-o-right" ng-click="refresh_iframe()"></i>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+        </aside>
+    </div>
+
+
+
+    <script src="/static/bower_components/angular/angular.min.js"></script>
+    <script src="/static/bower_components/angular-route/angular-route.min.js"></script>
+    <script src="/static/bower_components/ace-builds/src-min-noconflict/ace.js"></script>
+    <script src="/static/bower_components/angular-ui-ace/ui-ace.min.js"></script>
+    <script src="/static/admin/main.js"></script>
+
+
+    </body>
+    {% endraw %}
+</html>

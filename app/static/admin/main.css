@@ -1,0 +1,51 @@
+.navbar-brand {
+    color: #fff;
+}
+
+.treeview-menu li a {
+    margin-left: 10px;
+}
+
+.sidebar-menu .rotate-when-active {
+    transform: rotate(0);
+    transition: transform 100ms;
+}
+
+.sidebar-menu .active .rotate-when-active {
+    transform: rotate(-90deg);
+}
+
+.sidebar .sidebar-menu .treeview.tree-browser > ul.treeview-menu {
+    display: block;
+    transition: all 200ms ease-in-out;
+    max-height: 0;
+    overflow: hidden;
+}
+
+
+.sidebar .sidebar-menu .treeview.tree-browser.active > ul.treeview-menu {
+    display: block;
+    max-height: 5000px;
+}
+
+.treeview.tree-browser li.active {
+    background-color: #fff;
+}
+
+.box {
+    border-radius: 0;
+}
+
+.ace_editor  {
+  height : 400px;
+}
+
+iframe.preview {
+    height: 400px;
+    width: 100%;
+}
+
+
+[ng\:cloak], [ng-cloak], .ng-cloak {
+  display: none !important;
+}
