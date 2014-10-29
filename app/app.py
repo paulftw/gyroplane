@@ -35,10 +35,16 @@ app.config['DEFAULT_PARSERS'] = [
     'flask.ext.api.parsers.MultiPartParser'
 ]
 
-ROOT_DOMAIN = 'lvh.me'
-PORT = 8080
+if os.environ['SERVER_SOFTWARE'].startswith('Development'):
+    ROOT_DOMAIN = 'lvh.me'
+    #ROOT_DOMAIN = 'localhost'
+    PORT = 8080
+    SERVER_NAME = '%s:%s' % (ROOT_DOMAIN, PORT)
+else:
+    ROOT_DOMAIN = 'gyroplane.io'
+    PORT = 80
+    SERVER_NAME = '%s' % (ROOT_DOMAIN, )
 
-app.config.update(SERVER_NAME='%s:%s' % (ROOT_DOMAIN, PORT))
 
 from secrets import COOKIE_KEY
 app.secret_key = COOKIE_KEY
@@ -51,27 +57,29 @@ def favicon():
                                mimetype='image/vnd.microsoft.icon')
 
 
-@app.route("/", subdomain='<subdomain>')
-def homepage(subdomain):
-    return 'whoops ' + subdomain
-
 @app.route("/")
 def root_home():
-    return render_template('admin/index.html')
+    return render_template('admin/index.html', context=dict(
+        SERVER_NAME=SERVER_NAME,
+    ))
+
 
 @app.route("/get_code")
 def get_code():
     fiddle_id = request.values['fiddle_id']
     return jsonify(fiddler.get_code(fiddle_id))
 
-@app.route("/v1/<fiddle_id>")
+@app.route("/v0/<fiddle_id>")
 def edit_fiddle(fiddle_id):
-    return render_template('admin/index.html', debug="Loaded ID " + fiddle_id)
+    code = fiddler.get_code(fiddle_id)
+    return render_template('admin/index.html', context=dict(
+        SERVER_NAME=SERVER_NAME,
+        files=code,
+        fiddle_id=fiddle_id,
+    ))
 
 @app.route('/save', methods=['POST'])
 def save():
-    main_py = request.values.get('main_py', '')
-    logging.warn('req vals = %s %s', request.values, request.get_json())
     main_py = request.get_json()['main_py']
     status, fiddle_id = fiddler.save_app(main_py)
     return jsonify(status=status, fiddle_id=fiddle_id)
@@ -102,18 +110,20 @@ class SubdomainDispatcher(object):
             return app
 
     def __call__(self, environ, start_response):
+        namespace_manager.set_namespace("")
         subdomain = self.get_subdomain(environ['HTTP_HOST'])
+        if subdomain == 'www':
+            subdomain = ''
         namespace = 'gyro_' + subdomain if subdomain else ''
         try:
             sub_app = self.get_application(subdomain, namespace)
             namespace_manager.set_namespace(namespace)
-            logging.warn('sub_app = %s', sub_app)
             return sub_app(environ, start_response)
         finally:
             namespace_manager.set_namespace("")
 
-root_app = app
 
+root_app = app
 
 dispatcher = SubdomainDispatcher(ROOT_DOMAIN, fiddler.load_app)
 dispatcher.instances[''] = root_app

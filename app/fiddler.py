@@ -56,7 +56,6 @@ def load_app(subdomain, namespace):
     if data is None:
         return app
 
-
     try:
         compiled = compile(data.main_py, '%s.gyroplane.io/main.py' % subdomain, 'exec')
     except Exception as e:
