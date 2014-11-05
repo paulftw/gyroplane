@@ -41,9 +41,7 @@
         </header>
 
         <div class="workspace ng-cloak">
-            <aside class="flex-sidebar">
-                <section class="sidebar">
-
+            <aside class="flex-sidebar sidebar">
                     <!-- search form --
                     <form action="#" method="get" class="sidebar-form">
                         <div class="input-group">
@@ -55,17 +53,17 @@
                     </form>
                     <!-- /.search form -->
 
-                    <!-- sidebar menu: : style can be found in sidebar.less --
+                    <!-- sidebar menu: : style can be found in sidebar.less -->
                     <ul class="sidebar-menu">
 
-                        <li class="treeview">
+                        <!-- <li class="treeview"> --
                             <a href="#">
                                 <i class="fa fa-cog"></i>
                                 <span>Site Options</span>
                                 <i class="fa fa-fw fa-angle-left pull-right rotate-when-active"></i>
                             </a>
-                        </li>
-                        <li class="treeview tree-browser {{ expanded_files && 'active' }}">
+                        </li> <!-- -->
+                        <li class="treeview tree-browser active">
                             <a href="#" ng-click="expanded_files = !expanded_files">
                                 <i class="fa fa-folder"></i>
                                 <span>Files</span>
@@ -78,7 +76,7 @@
                                 <li><a href="#"><i class="fa fa-file-code-o"></i> main.js</a></li>
                             </ul>
                         </li>
-                        <li class="treeview tree-browser {{ expanded_database && 'active' }}">
+                        <!-- <li class="treeview tree-browser {{ expanded_database && 'active' }}"> --
                             <a href="#" ng-click="expanded_database = !expanded_database">
                                 <i class="fa fa-database"></i>
                                 <span>Database</span>
@@ -90,10 +88,9 @@
                                 <li><a href="#"><i class="fa fa-table"></i> Games</a></li>
                                 <li><a href="#"><i class="fa fa-table"></i> Messages</a></li>
                             </ul>
-                        </li>
+                        </li> <!-- -->
                     </ul>
                     <!-- -->
-                </section>
             </aside>
             <aside class="flex-main-area">
 

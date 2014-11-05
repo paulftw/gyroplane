@@ -1,1 +1,1 @@
-COOKIE_KEY = 'safwefokjowefjowefjowefkjoewjfowefjowejfowejfowejfowefjofewjoefwifyewofjewioefwifweio'
+COOKIE_KEY = 'j98jg54oijg45ghroe3049g4g0j43g90j34g09j4t0934jt0934jt90jregoj340943g094390434tg34g43g'

@@ -2,13 +2,52 @@ import logging
 import string
 from google.appengine.api import namespace_manager
 from google.appengine.ext import ndb
+from titan import files
 
 key_alphabet = string.digits + string.lowercase
 key_base = len(key_alphabet)
 
 
+def namespaced(fn):
+    from functools import wraps
+    @wraps(fn)
+    def wrapped(self, *args, **kwargs):
+        old_namespace = namespace_manager.get_namespace()
+        namespace_manager.set_namespace(self.get_sys_namespace())
+        try:
+            return fn(self, *args, **kwargs)
+        finally:
+            namespace_manager.set_namespace(old_namespace)
+    return wrapped
+
+
 class App(ndb.Model):
-    main_py = ndb.StringProperty(default="")
+
+    @namespaced
+    def write_file(self, name, data):
+        logging.warn('\n\n****\n\nnwrite  %s  %s  ns=%s', self.get_file_obj(name), data, namespace_manager.get_namespace())
+        return self.get_file_obj(name).write(data)
+
+    @namespaced
+    def read_file(self, name):
+        return self.get_file_obj(name).read()
+
+    def string_id(self):
+        return id_to_string(self.key.id())
+
+    @namespaced
+    def get_file_obj(self, name):
+        return files.File('/appcode_{}/{}'.format(self.string_id(), name))
+
+    @namespaced
+    def list_files(self):
+        logging.warn('\n\n****\n\nread  %s  ns=%s', '/appcode_{}/'.format(self.string_id()), namespace_manager.get_namespace())
+        return files.Files.list('/appcode_{}/'.format(self.string_id()))
+
+    def get_sys_namespace(self):
+        return ''
+        return 'gyro_sys_' + self.string_id()
+
 
 
 def id_to_string(x):
@@ -27,16 +66,24 @@ def string_to_id(s):
     return ret
 
 
-def save_app(main_py, subdomain=None):
-    new_app = App(main_py=main_py)
-    new_app.put()
-    return True, id_to_string(new_app.key.id())
+def save_app(files, subdomain=None):
+    if subdomain is None:
+        new_app = App()
+        new_app.put()
+    else:
+        new_app = get_app(subdomain)
+    for filename, data in files.items():
+        new_app.write_file(filename, data)
+    return True, new_app.string_id()
+
 
 def get_code(subdomain):
     app = get_app(subdomain)
-    return {
-        "main.py": app.main_py
-    }
+    file_list = app.list_files()
+
+    files = [(filename, file.read()) for filename, file in file_list.items()]
+    return files
+
 
 def get_app(subdomain):
     if subdomain == 'null':
@@ -51,13 +98,13 @@ def load_app(subdomain, namespace):
     app = flask.Flask(subdomain)
     app.config.update(DEBUG=True)
 
-    data = get_app(subdomain)
+    app_data = get_app(subdomain)
 
-    if data is None:
+    if app_data is None:
         return app
 
     try:
-        compiled = compile(data.main_py, '%s.gyroplane.io/main.py' % subdomain, 'exec')
+        compiled = compile(app_data.read_file('main.py'), '%s.gyroplane.io/main.py' % subdomain, 'exec')
     except Exception as e:
         return app
 

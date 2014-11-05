@@ -48,7 +48,7 @@ counter_tpl = \"\"\"\n\
         $scope.reset_state();
 
         $scope.save = function() {
-            $http.post('/save', {main_py: $scope.files['main.py']})
+            $http.post('/save', {files: $scope.files})
                 .success(function(data, status, headers, config) {
                     if ($scope.fiddle_id != data.fiddle_id) {
                         $scope.fiddle_id = data.fiddle_id;

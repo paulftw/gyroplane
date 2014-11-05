@@ -64,6 +64,7 @@ body {
 
 aside.flex-sidebar {
     width: 220px;
+    padding: 8px 0;
 }
 
 aside.flex-main-area {

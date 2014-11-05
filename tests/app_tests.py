@@ -1,4 +1,4 @@
-from app import app
+from app.app import app
 import unittest
 import os
 from nose.tools import eq_
@@ -12,9 +12,10 @@ class AppTestCase(unittest.TestCase):
         self.testbed.activate()
         self.testbed.init_datastore_v3_stub()
         self.testbed.init_memcache_stub()
-        
-        app.config['TESTING'] = True
-        self.client = app.test_client()
+
+        root_app = app.instances['']
+        root_app.config['TESTING'] = True
+        self.client = root_app.test_client()
     
     def test_homepage(self):
         response = self.client.get('/')

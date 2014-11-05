@@ -9,10 +9,7 @@ sys.path.insert(0, './libs')
 sys.path.insert(0, './libs.zip')
 
 from flask import Flask, jsonify, render_template, request, send_from_directory
-from flask.ext import security
-from flask.ext.security import Security
 from google.appengine.api import namespace_manager
-from google.appengine.ext import db
 from threading import Lock
 import logging
 import os
@@ -25,9 +22,9 @@ import fiddler
 app = Flask(__name__)
 root_app = app
 
-# Switch to debug mode if we run on a dev_sever
-app.config.update(
-    DEBUG=os.environ['SERVER_SOFTWARE'].startswith('Development'))
+# Switch to debug mode if we run on a dev_server
+DEBUG_MODE = os.environ.get('SERVER_SOFTWARE', '').startswith('Development')
+app.config.update(DEBUG=DEBUG_MODE)
 
 app.config['DEFAULT_PARSERS'] = [
     'flask.ext.api.parsers.JSONParser',
@@ -35,7 +32,7 @@ app.config['DEFAULT_PARSERS'] = [
     'flask.ext.api.parsers.MultiPartParser'
 ]
 
-if os.environ['SERVER_SOFTWARE'].startswith('Development'):
+if DEBUG_MODE:
     ROOT_DOMAIN = 'lvh.me'
     #ROOT_DOMAIN = 'localhost'
     PORT = 8080
@@ -46,8 +43,8 @@ else:
     SERVER_NAME = '%s' % (ROOT_DOMAIN, )
 
 
-from secrets import COOKIE_KEY
-app.secret_key = COOKIE_KEY
+from security import init_security
+init_security(app)
 
 
 @app.route('/favicon.ico')
@@ -71,17 +68,17 @@ def get_code():
 
 @app.route("/v0/<fiddle_id>")
 def edit_fiddle(fiddle_id):
-    code = fiddler.get_code(fiddle_id)
+    files = fiddler.get_code(fiddle_id)
     return render_template('admin/index.html', context=dict(
         SERVER_NAME=SERVER_NAME,
-        files=code,
+        files=files,
         fiddle_id=fiddle_id,
     ))
 
 @app.route('/save', methods=['POST'])
 def save():
-    main_py = request.get_json()['main_py']
-    status, fiddle_id = fiddler.save_app(main_py)
+    files = request.get_json()['files']
+    status, fiddle_id = fiddler.save_app(files)
     return jsonify(status=status, fiddle_id=fiddle_id)
 
 
