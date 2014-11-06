@@ -70,10 +70,31 @@
                                 <i class="fa fa-fw fa-angle-left pull-right rotate-when-active"></i>
                             </a>
                             <ul class="treeview-menu">
-                                <li class="active"><a href="#"><i class="fa fa-file-code-o"></i> main.py</a></li>
-                                <li><a href="#"><i class="fa fa-file-code-o"></i> index.html</a></li>
-                                <li><a href="#"><i class="fa fa-file-code-o"></i> main.less</a></li>
-                                <li><a href="#"><i class="fa fa-file-code-o"></i> main.js</a></li>
+                                <li ng-repeat="(name, data) in files | orderBy:name"
+                                    ng-class="{active: name==active_file, 'file-control': 1}">
+
+                                    <a ng-click="edit_file(name, $event)" href="#">
+                                        <i class="fa fa-file-code-o"></i> <span>{{ name }}</span>
+                                    </a>
+                                    <div class="dropdown file-settings">
+                                        <button class="dropdown-toggle">
+                                            <i class="fa fa-fw fa-cog"></i>
+                                        </button>
+                                        <ul class="dropdown-menu" role="menu">
+                                            <li role="presentation">
+                                                <a role="menuitem" tabindex="-1" href="#"
+                                                   ng-click="rename_file(name)">Rename</a>
+                                            </li>
+                                            <li role="presentation">
+                                                <a role="menuitem" tabindex="-1" href="#"
+                                                   ng-click="delete_file(name)">Delete</a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </li>
+                                <li>
+                                    <a ng-click="new_file()" href="#"><i class="fa fa-plus"></i> new file</a>
+                                </li>
                             </ul>
                         </li>
                         <!-- <li class="treeview tree-browser {{ expanded_database && 'active' }}"> --
@@ -95,7 +116,7 @@
             <aside class="flex-main-area">
 
                 <div class="half-column box box-primary">
-                    <div class="ace_editor" ng-model="files['main.py']" ui-ace="{
+                    <div class="ace_editor" ng-model="files[active_file]" ui-ace="{
                             theme: 'tomorrow',
                             mode: 'python',
                             showGutter: true,
@@ -125,6 +146,8 @@
 
 
     <script src="/static/bower_components/angular/angular.min.js"></script>
+    <script src="/static/bower_components/angular-ui-bootstrap-bower/ui-bootstrap.min.js"></script>
+    <script src="/static/bower_components/lodash/dist/lodash.min.js"></script>
     <script src="/static/bower_components/angular-route/angular-route.min.js"></script>
     <script src="/static/bower_components/ace-builds/src-min-noconflict/ace.js"></script>
     <script src="/static/bower_components/angular-ui-ace/ui-ace.min.js"></script>

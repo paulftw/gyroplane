@@ -19,7 +19,6 @@
     display: block;
     transition: all 200ms ease-in-out;
     max-height: 0;
-    overflow: hidden;
 }
 
 
@@ -80,6 +79,30 @@ aside.flex-main-area .half-column {
     display: flex;
     flex-direction: row;
 }
+
+li.file-control {
+    display: flex;
+}
+
+li.file-control > a {
+    flex: 1;
+}
+
+.dropdown.file-settings {
+    display: none;
+}
+
+.dropdown.file-settings > button {
+    background: inherit;
+    margin: 0;
+    border: 0;
+    padding: 4px 5px;
+}
+
+li:hover > .dropdown.file-settings, li > .dropdown.file-settings.open {
+    display: block;
+}
+
 
 aside.flex-main-area .half-column.vertical {
     flex-direction: column;

@@ -43,8 +43,8 @@ else:
     SERVER_NAME = '%s' % (ROOT_DOMAIN, )
 
 
-from security import init_security
-init_security(app)
+#from security import init_security
+#init_security(app)
 
 
 @app.route('/favicon.ico')
@@ -61,24 +61,23 @@ def root_home():
     ))
 
 
-@app.route("/get_code")
-def get_code():
-    fiddle_id = request.values['fiddle_id']
-    return jsonify(fiddler.get_code(fiddle_id))
-
 @app.route("/v0/<fiddle_id>")
 def edit_fiddle(fiddle_id):
-    files = fiddler.get_code(fiddle_id)
+    files = fiddler.get_files(fiddle_id)
     return render_template('admin/index.html', context=dict(
         SERVER_NAME=SERVER_NAME,
         files=files,
         fiddle_id=fiddle_id,
     ))
 
+
 @app.route('/save', methods=['POST'])
 def save():
-    files = request.get_json()['files']
-    status, fiddle_id = fiddler.save_app(files)
+    request_json = request.get_json()
+    fiddle_id = request_json.get('fiddle_id', None)
+    files = request_json['files']
+    deleted_files = request_json.get('deleted_files', {})
+    status, fiddle_id = fiddler.save_app(files, deleted_files, fiddle_id=fiddle_id)
     return jsonify(status=status, fiddle_id=fiddle_id)
 
 

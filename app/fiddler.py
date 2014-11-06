@@ -25,8 +25,11 @@ class App(ndb.Model):
 
     @namespaced
     def write_file(self, name, data):
-        logging.warn('\n\n****\n\nnwrite  %s  %s  ns=%s', self.get_file_obj(name), data, namespace_manager.get_namespace())
         return self.get_file_obj(name).write(data)
+
+    @namespaced
+    def delete_file(self, name):
+        return self.get_file_obj(name).delete()
 
     @namespaced
     def read_file(self, name):
@@ -37,12 +40,13 @@ class App(ndb.Model):
 
     @namespaced
     def get_file_obj(self, name):
-        return files.File('/appcode_{}/{}'.format(self.string_id(), name))
+        if not name.startswith('/'):
+            name = '/' + name
+        return files.File(name)
 
     @namespaced
     def list_files(self):
-        logging.warn('\n\n****\n\nread  %s  ns=%s', '/appcode_{}/'.format(self.string_id()), namespace_manager.get_namespace())
-        return files.Files.list('/appcode_{}/'.format(self.string_id()))
+        return files.Files.list('/')
 
     def get_sys_namespace(self):
         return ''
@@ -66,29 +70,32 @@ def string_to_id(s):
     return ret
 
 
-def save_app(files, subdomain=None):
-    if subdomain is None:
+def save_app(files, deleted_files={}, fiddle_id=None):
+    if fiddle_id is None:
         new_app = App()
         new_app.put()
     else:
-        new_app = get_app(subdomain)
+        new_app = get_app(fiddle_id)
     for filename, data in files.items():
         new_app.write_file(filename, data)
+
+    for filename in deleted_files.keys():
+        new_app.delete_file(filename)
     return True, new_app.string_id()
 
 
-def get_code(subdomain):
+def get_files(subdomain):
     app = get_app(subdomain)
     file_list = app.list_files()
 
-    files = [(filename, file.read()) for filename, file in file_list.items()]
+    files = dict([(filename[1:], file.read()) for filename, file in file_list.items()])
     return files
 
 
-def get_app(subdomain):
-    if subdomain == 'null':
+def get_app(fiddle_id):
+    if fiddle_id == 'null':
         return None
-    return App.get_by_id(string_to_id(subdomain))
+    return App.get_by_id(string_to_id(fiddle_id))
 
 
 instances = {}

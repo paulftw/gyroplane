@@ -32,7 +32,7 @@ counter_tpl = \"\"\"\n\
 \"\"\"\n\
 ";
 
-    var module = angular.module('gyro', ['ui.ace']);
+    var module = angular.module('gyro', ['ui.ace', 'ui.bootstrap']);
 
     module.controller('Fiddler', function($scope, $http, $sce, $document) {
 
@@ -41,25 +41,29 @@ counter_tpl = \"\"\"\n\
             $scope.files = LOADED_SRC || {
                 'main.py': DEFAULT_CODE
             };
+            $scope.deleted_files = {};
 
             $scope.fiddle_id = LOADED_FIDDLE_ID;
             $scope.url_suffix = '/';
+            $scope.active_file = _(_.keys($scope.files).sort()).first();
         };
         $scope.reset_state();
 
         $scope.save = function() {
-            $http.post('/save', {files: $scope.files})
-                .success(function(data, status, headers, config) {
-                    if ($scope.fiddle_id != data.fiddle_id) {
-                        $scope.fiddle_id = data.fiddle_id;
-                        $scope.open_fiddle_root();
-                        window.location = '/v0/' + $scope.fiddle_id;
-                    }
-                    $scope.refresh_iframe();
-                })
-                .error(function() {
-                    console.log('error', arguments);
-                });
+            $http.post('/save', {
+                    files: $scope.files,
+                    deleted_files: $scope.deleted_files,
+                    fiddle_id: $scope.fiddle_id
+            }).success(function(data, status, headers, config) {
+                if ($scope.fiddle_id != data.fiddle_id) {
+                    $scope.fiddle_id = data.fiddle_id;
+                    $scope.open_fiddle_root();
+                    window.location = '/v0/' + $scope.fiddle_id;
+                }
+                $scope.refresh_iframe();
+            }).error(function() {
+                console.log('error', arguments);
+            });
         };
 
         $scope.url_prefix = function() {
@@ -84,7 +88,34 @@ counter_tpl = \"\"\"\n\
         $scope.open_fiddle_root = function() {
             $scope.url_suffix = '/';
             //$location.path($scope.fiddle_id);
-        }
+        };
+
+        $scope.edit_file = function(filename, $event) {
+            $scope.active_file = filename;
+        };
+
+        $scope.new_file = function() {
+            var filename = "new_file.000";
+            var index = 1;
+            while ($scope.files.hasOwnProperty(filename)) {
+                filename = (index++) + "";
+                while (filename.length < 3) {
+                    filename = "0" + filename;
+                }
+                filename = "new_file." + filename;
+            }
+            $scope.files[filename] = '<type something awesome>';
+            $scope.active_file = filename;
+        };
+
+        $scope.delete_file = function(name) {
+            if (name=='main.py') {
+                return;
+            }
+            $scope.deleted_files[name] = 1;
+            delete $scope.files[name];
+            $scope.active_file = _(_.keys($scope.files).sort()).first();
+        };
 
 //        $scope.$watch(function() {
 //            return $location.path();
