@@ -78,6 +78,7 @@ def save():
     files = request_json['files']
     deleted_files = request_json.get('deleted_files', {})
     status, fiddle_id = fiddler.save_app(files, deleted_files, fiddle_id=fiddle_id)
+    unload_app(fiddle_id)
     return jsonify(status=status, fiddle_id=fiddle_id)
 
 
@@ -123,6 +124,10 @@ root_app = app
 
 dispatcher = SubdomainDispatcher(ROOT_DOMAIN, fiddler.load_app)
 dispatcher.instances[''] = root_app
+
+def unload_app(fiddle_id):
+    if fiddle_id in dispatcher.instances:
+        del dispatcher.instances[fiddle_id]
 
 # Make dispatcher the server's entry point
 app = dispatcher

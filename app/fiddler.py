@@ -110,6 +110,11 @@ def load_app(subdomain, namespace):
     if app_data is None:
         return app
 
+    def tpl_loader(name):
+        return app_data.read_file(name)
+    from jinja2 import FunctionLoader
+    app.jinja_loader = FunctionLoader(tpl_loader)
+
     try:
         compiled = compile(app_data.read_file('main.py'), '%s.gyroplane.io/main.py' % subdomain, 'exec')
     except Exception as e:

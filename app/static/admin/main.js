@@ -34,7 +34,7 @@ counter_tpl = \"\"\"\n\
 
     var module = angular.module('gyro', ['ui.ace', 'ui.bootstrap']);
 
-    module.controller('Fiddler', function($scope, $http, $sce, $document) {
+    module.controller('Fiddler', function($scope, $http, $sce, $document, $focus) {
 
         $scope.reset_state = function() {
 
@@ -50,11 +50,13 @@ counter_tpl = \"\"\"\n\
         $scope.reset_state();
 
         $scope.save = function() {
+            $scope.save_in_progress = true;
             $http.post('/save', {
                     files: $scope.files,
                     deleted_files: $scope.deleted_files,
                     fiddle_id: $scope.fiddle_id
             }).success(function(data, status, headers, config) {
+                $scope.save_in_progress = false;
                 if ($scope.fiddle_id != data.fiddle_id) {
                     $scope.fiddle_id = data.fiddle_id;
                     $scope.open_fiddle_root();
@@ -62,6 +64,7 @@ counter_tpl = \"\"\"\n\
                 }
                 $scope.refresh_iframe();
             }).error(function() {
+                $scope.save_in_progress = false;
                 console.log('error', arguments);
             });
         };
@@ -106,6 +109,7 @@ counter_tpl = \"\"\"\n\
             }
             $scope.files[filename] = '<type something awesome>';
             $scope.active_file = filename;
+            $scope.rename_file(filename);
         };
 
         $scope.delete_file = function(name) {
@@ -115,6 +119,34 @@ counter_tpl = \"\"\"\n\
             $scope.deleted_files[name] = 1;
             delete $scope.files[name];
             $scope.active_file = _(_.keys($scope.files).sort()).first();
+        };
+
+        $scope.rename_file = function(name) {
+            $scope.renaming = $scope.renaming || {};
+            $scope.renaming.file = name;
+            $scope.renaming.to = name;
+            $focus('renaming_input');
+        };
+
+        $scope.renaming_keydown = function(event) {
+            if (!$scope.renaming || !$scope.renaming.file) {
+                return;
+            }
+            if (event.keyCode == 13) {
+                var new_name = $scope.renaming.to;
+                var old_name = $scope.renaming.file;
+                if (new_name == old_name) {
+                    $scope.renaming= {};
+                    return;
+                }
+                $scope.files[new_name] = $scope.files[old_name];
+                $scope.delete_file(old_name);
+                $scope.active_file = new_name;
+                return;
+            }
+            if (event.keyCode == 27) {
+                $scope.renaming= {};
+            }
         };
 
 //        $scope.$watch(function() {
@@ -142,6 +174,26 @@ counter_tpl = \"\"\"\n\
 //                });
 //            $scope.refresh_iframe();
 //        });
+    });
+
+
+    module.directive('focusOn', function() {
+       return function(scope, elem, attr) {
+          scope.$on('focusOn', function(e, name) {
+            if(name === attr.focusOn) {
+              elem[0].focus();
+              elem[0].select();
+            }
+          });
+       };
+    });
+
+    module.factory('$focus', function ($rootScope, $timeout) {
+      return function(name) {
+        $timeout(function (){
+          $rootScope.$broadcast('focusOn', name);
+        });
+      }
     });
 
 }());

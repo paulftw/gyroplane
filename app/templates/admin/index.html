@@ -29,7 +29,7 @@
                 <div class="collapse navbar-collapse">
                     <ul class="nav navbar-nav">
                         <li><a href="#"><i class="fa fa-play"></i> Run</a></li>
-                        <li><a ng-click="save()" href="#"><i class="fa fa-pencil"></i> Save</a></li>
+                        <li><a ng-click="save()" href="#"><i class="fa fa-pencil {{ save_in_progress && 'fa-spin' || '' }}"></i> Save</a></li>
                     </ul>
                     <!--
                     <ul class="nav navbar-nav navbar-right">
@@ -74,7 +74,11 @@
                                     ng-class="{active: name==active_file, 'file-control': 1}">
 
                                     <a ng-click="edit_file(name, $event)" href="#">
-                                        <i class="fa fa-file-code-o"></i> <span>{{ name }}</span>
+                                        <i class="fa fa-file-code-o"></i>
+                                        <span ng-if="renaming.file != name">{{ name }}</span>
+                                        <input ng-if="renaming.file == name" type="text" ng-model="renaming.to"
+                                            ng-keydown="renaming_keydown($event)"
+                                            focus-on="renaming_input"" />
                                     </a>
                                     <div class="dropdown file-settings">
                                         <button class="dropdown-toggle">
