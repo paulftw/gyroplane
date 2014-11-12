@@ -5,47 +5,18 @@
     var LOADED_SRC = window.Gyroplane_Context.files;
     var LOADED_FIDDLE_ID = window.Gyroplane_Context.fiddle_id;
 
-    var DEFAULT_CODE = "@app.route('/')\n\
-def homepage():\n\
-    return mainpage_tpl\n\
-\n\
-\n\
-view_count = 0\n\
-\n\
-@app.route('/counter')\n\
-def counter():\n\
-    global view_count\n\
-    view_count = view_count + 1\n\
-    return counter_tpl % view_count\n\
-\n\
-\n\
-mainpage_tpl = \"\"\"\n\
-    <h1>Hello World!</h1>\n\
-    <p>\n\
-        Try <a href=/counter>counter</a>\n\
-    </p>\n\
-\"\"\"\n\
-\n\
-counter_tpl = \"\"\"\n\
-    <p>This page has been visited %s time(s)</p>\n\
-    <a href=/counter>Refresh</a>\n\
-\"\"\"\n\
-";
-
     var module = angular.module('gyro', ['ui.ace', 'ui.bootstrap']);
 
     module.controller('Fiddler', function($scope, $http, $sce, $document, $focus) {
 
         $scope.reset_state = function() {
 
-            $scope.files = LOADED_SRC || {
-                'main.py': DEFAULT_CODE
-            };
+            $scope.files = LOADED_SRC;
             $scope.deleted_files = {};
 
             $scope.fiddle_id = LOADED_FIDDLE_ID;
             $scope.url_suffix = '/';
-            $scope.active_file = _(_.keys($scope.files).sort()).first();
+            $scope.active_file = 'main.py';
         };
         $scope.reset_state();
 
@@ -118,7 +89,7 @@ counter_tpl = \"\"\"\n\
             }
             $scope.deleted_files[name] = 1;
             delete $scope.files[name];
-            $scope.active_file = _(_.keys($scope.files).sort()).first();
+            $scope.active_file = 'main.py';
         };
 
         $scope.rename_file = function(name) {

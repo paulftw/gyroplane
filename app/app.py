@@ -13,10 +13,40 @@ from google.appengine.api import namespace_manager
 from threading import Lock
 import logging
 import os
+import re
 
 import fiddler
 
 
+DEFAULT_FILES = {
+    'main.py':
+"""from flask import render_template
+
+@app.route('/')
+def homepage():
+    return render_template('main.html')
+
+
+view_count = 0
+
+@app.route('/counter')
+def counter():
+    global view_count
+    view_count = view_count + 1
+    return render_template('counter.html', counter=view_count)
+
+""",
+    'main.html':
+"""<h1>Hello World!</h1>
+<p>
+    Try <a href=/counter>counter</a>
+</p>
+""",
+    'counter.html':
+"""<p>This page has been visited {{ counter }} time(s)</p>
+<a href=/counter>Refresh</a>
+"""
+}
 
 # GAE WSGI requires this object to be named app. Configurable in app.yaml
 app = Flask(__name__)
@@ -58,12 +88,14 @@ def favicon():
 def root_home():
     return render_template('admin/index.html', context=dict(
         SERVER_NAME=SERVER_NAME,
+        files=DEFAULT_FILES
     ))
 
 
 @app.route("/v0/<fiddle_id>")
 def edit_fiddle(fiddle_id):
     files = fiddler.get_files(fiddle_id)
+
     return render_template('admin/index.html', context=dict(
         SERVER_NAME=SERVER_NAME,
         files=files,
@@ -78,7 +110,7 @@ def save():
     files = request_json['files']
     deleted_files = request_json.get('deleted_files', {})
     status, fiddle_id = fiddler.save_app(files, deleted_files, fiddle_id=fiddle_id)
-    unload_app(fiddle_id)
+    dispatcher.unload_app(fiddle_id)
     return jsonify(status=status, fiddle_id=fiddle_id)
 
 
@@ -91,11 +123,16 @@ class SubdomainDispatcher(object):
         self.instances = {}
 
     def get_subdomain(self, host):
-        host = host.split(':')[0]
-        assert host.endswith(self.domain),\
-            'Configuration error host: %s, self.domain: %s' % (host, self.domain)
+        host = host.lower().split(':')[0]
+        if not host.endswith(self.domain):
+            # Used to be: 'Configuration error host: %s, self.domain: %s' % (host, self.domain)
+            return host
+
         host = host[:-len(self.domain)]
-        return host.rstrip('.')
+        app_domain = host.rstrip('.')
+        if app_domain == 'www':
+            return ''
+        return app_domain
 
     def get_application(self, subdomain, namespace):
         with self.lock:
@@ -108,26 +145,34 @@ class SubdomainDispatcher(object):
 
     def __call__(self, environ, start_response):
         namespace_manager.set_namespace("")
-        subdomain = self.get_subdomain(environ['HTTP_HOST'])
-        if subdomain == 'www':
-            subdomain = ''
-        namespace = 'gyro_' + subdomain if subdomain else ''
+        app_domain = self.get_subdomain(environ['HTTP_HOST'])
+        if app_domain == 'www':
+            app_domain = ''
+        if app_domain in ['', 'www']:
+            namespace = ''
+        else:
+            namespace = 'gyro_' + app_domain.replace('.', '_').replace('-', '_').replace(':', '_')
         try:
-            sub_app = self.get_application(subdomain, namespace)
+            sub_app = self.get_application(app_domain, namespace)
             namespace_manager.set_namespace(namespace)
             return sub_app(environ, start_response)
         finally:
             namespace_manager.set_namespace("")
 
+    def insert_app(self, domain, app):
+        with self.lock:
+            self.instances[domain] = app
+
+    def unload_app(self, domain):
+        with self.lock:
+            self.instances.pop(domain, None)
+
 
 root_app = app
 
 dispatcher = SubdomainDispatcher(ROOT_DOMAIN, fiddler.load_app)
-dispatcher.instances[''] = root_app
-
-def unload_app(fiddle_id):
-    if fiddle_id in dispatcher.instances:
-        del dispatcher.instances[fiddle_id]
+dispatcher.insert_app('', root_app)
+dispatcher.insert_app(ROOT_DOMAIN, root_app)
 
 # Make dispatcher the server's entry point
 app = dispatcher

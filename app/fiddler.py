@@ -23,6 +23,8 @@ def namespaced(fn):
 
 class App(ndb.Model):
 
+    domains = ndb.StringProperty(repeated=True)
+
     @namespaced
     def write_file(self, name, data):
         return self.get_file_obj(name).write(data)
@@ -49,9 +51,11 @@ class App(ndb.Model):
         return files.Files.list('/')
 
     def get_sys_namespace(self):
-        return ''
         return 'gyro_sys_' + self.string_id()
 
+    @classmethod
+    def find_by_domain(cls, domain):
+        return cls.query(cls.domains == domain).get()
 
 
 def id_to_string(x):
@@ -80,7 +84,11 @@ def save_app(files, deleted_files={}, fiddle_id=None):
         new_app.write_file(filename, data)
 
     for filename in deleted_files.keys():
-        new_app.delete_file(filename)
+        try:
+            new_app.delete_file(filename)
+        except:
+            # Ignore non-existing file
+            pass
     return True, new_app.string_id()
 
 
@@ -88,13 +96,20 @@ def get_files(subdomain):
     app = get_app(subdomain)
     file_list = app.list_files()
 
-    files = dict([(filename[1:], file.read()) for filename, file in file_list.items()])
+    files = dict([(filename[1:], app.read_file(filename)) for filename, file in file_list.items()])
     return files
 
 
 def get_app(fiddle_id):
     if fiddle_id == 'null':
         return None
+    res = None
+    try:
+        res = App.find_by_domain(fiddle_id)
+    except:
+        logging.exception('Hit for unknown domain %s', fiddle_id)
+    if res is not None:
+        return res
     return App.get_by_id(string_to_id(fiddle_id))
 
 
@@ -102,7 +117,9 @@ instances = {}
 
 def load_app(subdomain, namespace):
     import flask
-    app = flask.Flask(subdomain)
+
+    app_pkg = 'gyro_app_' + ''.join([x if x in key_alphabet else '_' for x in subdomain.lower()])
+    app = flask.Flask(app_pkg)
     app.config.update(DEBUG=True)
 
     app_data = get_app(subdomain)
@@ -118,13 +135,13 @@ def load_app(subdomain, namespace):
     try:
         compiled = compile(app_data.read_file('main.py'), '%s.gyroplane.io/main.py' % subdomain, 'exec')
     except Exception as e:
+        logging.exception('Compilation failed for %s', app)
         return app
 
     try:
         namespace_manager.set_namespace(namespace)
         exec compiled in {
             'app': app,
-            'flask': flask,
         }
         return app
     finally:

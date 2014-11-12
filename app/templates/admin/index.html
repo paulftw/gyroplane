@@ -28,8 +28,13 @@
 
                 <div class="collapse navbar-collapse">
                     <ul class="nav navbar-nav">
-                        <li><a href="#"><i class="fa fa-play"></i> Run</a></li>
-                        <li><a ng-click="save()" href="#"><i class="fa fa-pencil {{ save_in_progress && 'fa-spin' || '' }}"></i> Save</a></li>
+                        <!-- <li><a href="#"><i class="fa fa-play"></i> Run</a></li> -->
+                        <li>
+                            <a ng-click="save()" href="#">
+                                <i class="fa fa-pencil {{ save_in_progress && 'fa-spin' || '' }}"></i>
+                                Save
+                            </a>
+                        </li>
                     </ul>
                     <!--
                     <ul class="nav navbar-nav navbar-right">
