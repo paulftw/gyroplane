@@ -1,8 +1,10 @@
+import base64
 import logging
 import string
 from google.appengine.api import namespace_manager
 from google.appengine.ext import ndb
 from titan import files
+from werkzeug.exceptions import NotFound
 
 key_alphabet = string.digits + string.lowercase
 key_base = len(key_alphabet)
@@ -12,12 +14,13 @@ def namespaced(fn):
     from functools import wraps
     @wraps(fn)
     def wrapped(self, *args, **kwargs):
-        old_namespace = namespace_manager.get_namespace()
-        namespace_manager.set_namespace(self.get_sys_namespace())
+        #old_namespace = namespace_manager.get_namespace()
+        #namespace_manager.set_namespace(self.get_sys_namespace())
         try:
             return fn(self, *args, **kwargs)
         finally:
-            namespace_manager.set_namespace(old_namespace)
+            #namespace_manager.set_namespace(old_namespace)
+            pass
     return wrapped
 
 
@@ -51,7 +54,7 @@ class App(ndb.Model):
         return files.Files.list('/')
 
     def get_sys_namespace(self):
-        return 'gyro_sys_' + self.string_id()
+        return 'gyro_' + self.string_id()
 
     @classmethod
     def find_by_domain(cls, domain):
@@ -87,7 +90,6 @@ def save_app(files, deleted_files={}, fiddle_id=None):
     for filename, data in files.items():
         if isinstance(data, dict):
             assert data['is_binary']
-            import base64
             data = base64.b64decode(data['data'])
         new_app.write_file(filename, data)
 
@@ -104,7 +106,17 @@ def get_files(subdomain):
     app = get_app(subdomain)
     file_list = app.list_files()
 
-    files = dict([(filename[1:], app.read_file(filename)) for filename, file in file_list.items()])
+    def get_file_content(filename):
+        content = app.read_file(filename)
+        try:
+            return unicode(content)
+        except UnicodeDecodeError:
+            return {
+                'is_binary': True,
+                'data': base64.standard_b64encode(content),
+            }
+
+    files = dict([(filename[1:], get_file_content(filename)) for filename, file in file_list.items()])
     return files
 
 
@@ -139,6 +151,34 @@ def load_app(subdomain, namespace):
         return app_data.read_file(name)
     from jinja2 import FunctionLoader
     app.jinja_loader = FunctionLoader(tpl_loader)
+
+
+    def override_send_file(filename):
+        cache_timeout = app.get_send_file_max_age(filename)
+        file = app_data.get_file_obj(filename)
+        if not file.exists:
+            raise NotFound()
+
+        class FileReadOnce(object):
+            def __init__(self, file):
+                self.file = file
+                self.already_read = False
+
+            def read(self, buf_size=0):
+                if self.already_read:
+                    return None
+                self.already_read = True
+                content = self.file.read()
+                if isinstance(content, unicode):
+                    content = content.encode('utf-8')
+                return content
+
+        file = FileReadOnce(file)
+
+        from flask.helpers import send_file
+        return send_file(file, attachment_filename=filename, cache_timeout=cache_timeout, conditional=True)
+
+    app.send_static_file = override_send_file
 
     try:
         compiled = compile(app_data.read_file('main.py'), '%s.gyroplane.io/main.py' % subdomain, 'exec')

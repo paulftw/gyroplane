@@ -159,7 +159,6 @@ class SubdomainDispatcher(object):
         with self.lock:
             app = self.instances.get(subdomain)
             if app is None:
-                logging.info('Loading app for subdomain %s', subdomain)
                 app = self.create_app(subdomain, namespace)
                 self.instances[subdomain] = app
             return app
@@ -175,7 +174,8 @@ class SubdomainDispatcher(object):
             namespace = 'gyro_' + app_domain.replace('.', '_').replace('-', '_').replace(':', '_')
         try:
             sub_app = self.get_application(app_domain, namespace)
-            namespace_manager.set_namespace(namespace)
+            if hasattr(sub_app, 'get_sys_namespace'):
+                namespace_manager.set_namespace(sub_app.get_sys_namespace())
             return sub_app(environ, start_response)
         finally:
             namespace_manager.set_namespace("")
