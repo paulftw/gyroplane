@@ -1,13 +1,15 @@
 
 (function() {
+    var MAX_FILE_SIZE = 1024 * 1024;
+
     var SERVER_NAME = window.Gyroplane_Context.SERVER_NAME;
 
     var LOADED_SRC = window.Gyroplane_Context.files;
     var LOADED_FIDDLE_ID = window.Gyroplane_Context.fiddle_id;
 
-    var module = angular.module('gyro', ['ui.ace', 'ui.bootstrap']);
+    var module = angular.module('gyro', ['ui.ace', 'ui.bootstrap', 'angularFileUpload']);
 
-    module.controller('Fiddler', function($scope, $http, $sce, $document, $focus) {
+    module.controller('Fiddler', function($scope, $http, $sce, $document, $focus, $uploadSignal, FileUploader) {
 
         $scope.reset_state = function() {
 
@@ -65,6 +67,10 @@
         };
 
         $scope.edit_file = function(filename, $event) {
+            if ($scope.files[filename].is_binary) {
+                alert('Cannot edit a binary file, sorry.');
+                return;
+            }
             $scope.active_file = filename;
         };
 
@@ -110,6 +116,11 @@
                     $scope.renaming= {};
                     return;
                 }
+                if ($scope.files[new_name]) {
+                    alert('A file with this name already exists');
+                    $scope.renaming= {};
+                    return;
+                }
                 $scope.files[new_name] = $scope.files[old_name];
                 $scope.delete_file(old_name);
                 $scope.active_file = new_name;
@@ -120,31 +131,33 @@
             }
         };
 
-//        $scope.$watch(function() {
-//            return $location.path();
-//        }, function(newVal) {
-//            var fiddle_id = newVal;
-//            if (fiddle_id[0] == '/') {
-//                fiddle_id = fiddle_id.substring(1);
-//            }
-//
-//            if (fiddle_id == '') {
-//                if ($scope.fiddle_id == null) {
-//                    return;
-//                } else {
-//                    $scope.reset_state();
-//                    return;
-//                }
-//            }
-//
-//            $scope.fiddle_id = fiddle_id;
-//            $http.get('/get_code', { params: {fiddle_id: fiddle_id } })
-//                .success(function(response, status) {
-//                    $scope.files = response;
-//                    //alert('loaded some');
-//                });
-//            $scope.refresh_iframe();
-//        });
+        $scope.uploader = new FileUploader();
+        $scope.open_upload = function(event) {
+            $uploadSignal('button');
+        };
+
+        $scope.uploader.onAfterAddingFile = function(fileItem) {
+            if (fileItem.file.size > MAX_FILE_SIZE) {
+                alert('File is too big: ' + fileItem.file.name);
+                fileItem.remove();
+                return;
+            }
+            var reader = new FileReader();
+
+            // If we use onloadend, we need to check the readyState.
+            reader.onloadend = function(evt) {
+                fileItem.remove();
+                if (evt.target.readyState != FileReader.DONE) {
+                    return;
+                }
+                $scope.files[fileItem.file.name] = {
+                    is_binary: true,
+                    data: btoa(evt.target.result),
+                };
+            };
+
+            reader.readAsBinaryString(fileItem._file);
+        };
     });
 
 
@@ -165,6 +178,23 @@
           $rootScope.$broadcast('focusOn', name);
         });
       }
+    });
+
+    module.directive('uploadSignal', function() {
+       return function(scope, elem, attr) {
+          scope.$on('uploadSignal', function(e, name) {
+            if(name === attr.uploadSignal) {
+              console.log('Got signal', elem, attr);
+              elem[0].click();
+            }
+          });
+       };
+    });
+
+    module.factory('$uploadSignal', function ($rootScope) {
+        return function(name) {
+            $rootScope.$broadcast('uploadSignal', name);
+        }
     });
 
 }());

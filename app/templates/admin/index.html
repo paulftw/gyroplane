@@ -7,40 +7,42 @@
         <link rel="stylesheet" href="/static/admin/main.css">
     </head>
 
-    <body ng-app="gyro" ng-controller="Fiddler" class="skin-blue">
+    <body ng-app="gyro" ng-controller="Fiddler" class="skin-blue" nv-file-drop="" uploader="uploader">
 
         <header class="header">
             <a href="/" class="logo">
                 <!-- Add the class icon to your logo image or logo icon to add the margining -->
                 Gyroplane
             </a>
-            {%  raw %}
             <nav role="navigation" class="navbar navbar-static-top">
-                <div class="navbar-header">
-                    <button type="button" class="navbar-toggle">
-                        <span class="sr-only">Toggle navigation</span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                    </button>
+                <div class="container-fluid">
+                    <div class="navbar-header">
+                        <button type="button" class="navbar-toggle">
+                            <span class="sr-only">Toggle navigation</span>
+                            <span class="icon-bar"></span>
+                            <span class="icon-bar"></span>
+                            <span class="icon-bar"></span>
+                        </button>
+                    </div>
 
-                </div>
-
-                <div class="collapse navbar-collapse">
-                    <ul class="nav navbar-nav">
-                        <!-- <li><a href="#"><i class="fa fa-play"></i> Run</a></li> -->
-                        <li>
-                            <a ng-click="save()" href="#">
-                                <i class="fa fa-pencil {{ save_in_progress && 'fa-spin' || '' }}"></i>
-                                Save
-                            </a>
-                        </li>
-                    </ul>
-                    <!--
-                    <ul class="nav navbar-nav navbar-right">
-                        <li><a href="#">Login/Sign Up</a></li>
-                    </ul>
-                    -->
+                    <div class="collapse navbar-collapse">
+                        <ul class="nav navbar-nav">
+                            <!-- <li><a href="#"><i class="fa fa-play"></i> Run</a></li> -->
+                            <% if context.authorized %>
+                            <li>
+                                <a ng-click="save()" href="#">
+                                    <i class="fa fa-pencil {{ save_in_progress && 'fa-spin' || '' }}"></i>
+                                    Save
+                                </a>
+                            </li>
+                            <% endif %>
+                        </ul>
+                        <% if not context.authorized %>
+                        <ul class="nav navbar-nav navbar-right">
+                            <li><a href="{% context.login_url %}"><i class="fa fa-user"></i> Sign In</a></li>
+                        </ul>
+                        <% endif %>
+                    </div>
                 </div>
             </nav>
         </header>
@@ -83,9 +85,9 @@
                                         <span ng-if="renaming.file != name">{{ name }}</span>
                                         <input ng-if="renaming.file == name" type="text" ng-model="renaming.to"
                                             ng-keydown="renaming_keydown($event)"
-                                            focus-on="renaming_input"" />
+                                            focus-on="renaming_input" />
                                     </a>
-                                    <div class="dropdown file-settings">
+                                    <div ng-if="name != 'main.py'" class="dropdown file-settings">
                                         <button class="dropdown-toggle">
                                             <i class="fa fa-fw fa-cog"></i>
                                         </button>
@@ -103,6 +105,14 @@
                                 </li>
                                 <li>
                                     <a ng-click="new_file()" href="#"><i class="fa fa-plus"></i> new file</a>
+                                </li>
+                                <li class="dropzone" nv-file-over="" uploader="uploader">
+                                    <a ng-click="open_upload()" href="#">
+                                        <i class="fa fa-upload"></i> drop or upload files
+                                    </a>
+                                    <input class="file_upload_widget" nv-file-select upload-signal="button"
+                                           uploader="uploader"
+                                           type="file" multiple="" />
                                 </li>
                             </ul>
                         </li>
@@ -150,18 +160,17 @@
 
             </aside>
         </div>
-    {% endraw %}
-
 
 
     <script src="/static/bower_components/angular/angular.min.js"></script>
     <script src="/static/bower_components/angular-ui-bootstrap-bower/ui-bootstrap.min.js"></script>
     <script src="/static/bower_components/lodash/dist/lodash.min.js"></script>
     <script src="/static/bower_components/angular-route/angular-route.min.js"></script>
+    <script src="/static/bower_components/angular-file-upload/angular-file-upload.js"></script>
     <script src="/static/bower_components/ace-builds/src-min-noconflict/ace.js"></script>
     <script src="/static/bower_components/angular-ui-ace/ui-ace.min.js"></script>
     <script type="application/javascript">
-        window.Gyroplane_Context = {{ context|tojson|safe }};
+        window.Gyroplane_Context = {% context|tojson|safe %};
     </script>
     <script src="/static/admin/main.js"></script>
 <script>

@@ -75,12 +75,20 @@ def string_to_id(s):
 
 
 def save_app(files, deleted_files={}, fiddle_id=None):
+    if 'main.py' in deleted_files:
+        del deleted_files['main.py']
     if fiddle_id is None:
         new_app = App()
         new_app.put()
+        if 'main.py' not in files:
+            files['main.py'] = ''
     else:
         new_app = get_app(fiddle_id)
     for filename, data in files.items():
+        if isinstance(data, dict):
+            assert data['is_binary']
+            import base64
+            data = base64.b64decode(data['data'])
         new_app.write_file(filename, data)
 
     for filename in deleted_files.keys():

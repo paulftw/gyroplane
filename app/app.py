@@ -14,6 +14,7 @@ from threading import Lock
 import logging
 import os
 import re
+from titan import users
 
 import fiddler
 
@@ -52,6 +53,16 @@ def counter():
 app = Flask(__name__)
 root_app = app
 
+root_app.jinja_options = root_app.jinja_options.copy()
+root_app.jinja_options.update(dict(
+        block_start_string='<%',
+        block_end_string='%>',
+        variable_start_string='{%',
+        variable_end_string='%}',
+        comment_start_string='<#',
+        comment_end_string='#>',
+    ))
+
 # Switch to debug mode if we run on a dev_server
 DEBUG_MODE = os.environ.get('SERVER_SOFTWARE', '').startswith('Development')
 app.config.update(DEBUG=DEBUG_MODE)
@@ -85,26 +96,36 @@ def favicon():
 
 
 @app.route("/")
-def root_home():
-    return render_template('admin/index.html', context=dict(
-        SERVER_NAME=SERVER_NAME,
-        files=DEFAULT_FILES
-    ))
-
-
 @app.route("/v0/<fiddle_id>")
-def edit_fiddle(fiddle_id):
-    files = fiddler.get_files(fiddle_id)
+def root_home(fiddle_id=None):
+    user = users.get_current_user()
+    authorized = user is not None and user.is_admin
+
+    if not authorized:
+        login_url = users.create_login_url('/v0/' + fiddle_id if fiddle_id else '/')
+    else:
+        login_url = ''
+
+    if fiddle_id is not None:
+        files = fiddler.get_files(fiddle_id)
+    else:
+        files = DEFAULT_FILES
 
     return render_template('admin/index.html', context=dict(
         SERVER_NAME=SERVER_NAME,
         files=files,
+        authorized=authorized,
+        login_url=login_url,
         fiddle_id=fiddle_id,
     ))
 
 
 @app.route('/save', methods=['POST'])
 def save():
+    user = users.get_current_user()
+    if user is None or not user.is_admin:
+        return jsonify(status="Not Authorized")
+
     request_json = request.get_json()
     fiddle_id = request_json.get('fiddle_id', None)
     files = request_json['files']
