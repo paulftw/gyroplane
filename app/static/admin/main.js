@@ -146,14 +146,16 @@
 
             // If we use onloadend, we need to check the readyState.
             reader.onloadend = function(evt) {
-                fileItem.remove();
-                if (evt.target.readyState != FileReader.DONE) {
-                    return;
-                }
-                $scope.files[fileItem.file.name] = {
-                    is_binary: true,
-                    data: btoa(evt.target.result),
-                };
+                $scope.$apply(function() {
+                    fileItem.remove();
+                    if (evt.target.readyState != FileReader.DONE) {
+                        return;
+                    }
+                    $scope.files[fileItem.file.name] = {
+                        is_binary: true,
+                        data: btoa(evt.target.result),
+                    };
+                });
             };
 
             reader.readAsBinaryString(fileItem._file);
