@@ -10,7 +10,7 @@
     var module = angular.module('gyro', ['ui.ace', 'ui.bootstrap', 'angularFileUpload']);
 
     module.controller('Fiddler', function($scope, $http, $sce, $document, $focus, $uploadSignal, FileUploader) {
-
+        mixpanel.track("Page loaded");
         $scope.reset_state = function() {
 
             $scope.files = LOADED_SRC;
@@ -23,6 +23,7 @@
         $scope.reset_state();
 
         $scope.save = function() {
+            mixpanel.track("Saved app");
             $scope.save_in_progress = true;
             $http.post('/save', {
                     files: $scope.files,
@@ -90,6 +91,7 @@
         };
 
         $scope.delete_file = function(name) {
+            mixpanel.track("Deleted a file");
             if (name=='main.py') {
                 return;
             }
