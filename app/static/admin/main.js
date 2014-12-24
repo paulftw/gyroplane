@@ -1,11 +1,12 @@
 
-(function() {
+(function(context) {
     var MAX_FILE_SIZE = 1024 * 1024;
 
-    var SERVER_NAME = window.Gyroplane_Context.SERVER_NAME;
+    var SERVER_NAME = context.SERVER_NAME;
 
-    var LOADED_SRC = window.Gyroplane_Context.files;
-    var LOADED_FIDDLE_ID = window.Gyroplane_Context.fiddle_id;
+    var LOADED_SRC = context.files;
+    var LOADED_DOMAINS = context.domains || [];
+    var LOADED_FIDDLE_ID = context.fiddle_id;
 
     var module = angular.module('gyro', ['ui.ace', 'ui.bootstrap', 'angularFileUpload']);
 
@@ -13,6 +14,7 @@
         mixpanel.track("Page loaded");
         $scope.reset_state = function() {
 
+            $scope.domains = LOADED_DOMAINS;
             $scope.files = LOADED_SRC;
             $scope.deleted_files = {};
 
@@ -39,6 +41,17 @@
                 $scope.refresh_iframe();
             }).error(function() {
                 $scope.save_in_progress = false;
+                console.log('error', arguments);
+            });
+        };
+
+        $scope.save_domains = function() {
+            $http.post('/save_domains', {
+                    domains: $scope.domains,
+                    fiddle_id: $scope.fiddle_id
+            }).success(function(data, status, headers, config) {
+                console.log('domains saved');
+            }).error(function() {
                 console.log('error', arguments);
             });
         };
@@ -162,6 +175,11 @@
 
             reader.readAsBinaryString(fileItem._file);
         };
+
+        $scope.add_new_domain = function() {
+            $scope.domains.push('example' + fiddle_id + '.com');
+            $scope.save_domains();
+        };
     });
 
 
@@ -201,4 +219,4 @@
         }
     });
 
-}());
+}(window.Gyroplane_Context));

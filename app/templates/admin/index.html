@@ -63,15 +63,25 @@
                     <!-- sidebar menu: : style can be found in sidebar.less -->
                     <ul class="sidebar-menu">
 
-                        <!-- <li class="treeview"> --
+                        <li class="treeview tree-browser active">
                             <a href="#">
-                                <i class="fa fa-cog"></i>
-                                <span>Site Options</span>
+                                <i class="fa fa-globe"></i>
+                                <span>Domains</span>
                                 <i class="fa fa-fw fa-angle-left pull-right rotate-when-active"></i>
                             </a>
+                            <ul class="treeview-menu">
+                                <li ng-repeat="domain in domains" class="active file-control">
+                                    <a href="#" ng-click="edit_domain($index, domain)">{{ domain }}</a>
+                                </li>
+
+                                <li class="file-control">
+                                    <a href="#" ng-click="add_new_domain()"><i class="fa fa-plus"></i> add domain</a>
+                                </li>
+
+                            </ul>
                         </li> <!-- -->
                         <li class="treeview tree-browser active">
-                            <a href="#" ng-click="expanded_files = !expanded_files">
+                            <a href="#" ng-click=";">
                                 <i class="fa fa-folder"></i>
                                 <span>Files</span>
                                 <i class="fa fa-fw fa-angle-left pull-right rotate-when-active"></i>

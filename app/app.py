@@ -46,8 +46,13 @@ def counter():
     'counter.html':
 """<p>This page has been visited {{ counter }} time(s)</p>
 <a href=/counter>Refresh</a>
-"""
+""",
+    'static/css/style.css':
+"""html {
+    background-color: #eee;
+}"""
 }
+
 
 # GAE WSGI requires this object to be named app. Configurable in app.yaml
 app = Flask(__name__)
@@ -84,6 +89,8 @@ else:
     SERVER_NAME = '%s' % (ROOT_DOMAIN, )
 
 
+fiddler.touch_default_app(DEFAULT_FILES, SERVER_NAME)
+
 #from security import init_security
 #init_security(app)
 
@@ -101,19 +108,25 @@ def root_home(fiddle_id=None):
     user = users.get_current_user()
     authorized = user is not None and user.is_admin
 
+    domains = []
+    files = DEFAULT_FILES
+
     if not authorized:
         login_url = users.create_login_url('/v0/' + fiddle_id if fiddle_id else '/')
     else:
         login_url = ''
 
     if fiddle_id is not None:
-        files = fiddler.get_files(fiddle_id)
-    else:
-        files = DEFAULT_FILES
+        if authorized:
+            files, domains = fiddler.get_files_and_domains(fiddle_id)
+        else:
+            files = {'main.py': 'DO NOT SAVE!!!\nNot Authorized to view code. '}
+            domains = ['example.com']
 
     return render_template('admin/index.html', context=dict(
         SERVER_NAME=SERVER_NAME,
         files=files,
+        domains=domains,
         authorized=authorized,
         login_url=login_url,
         fiddle_id=fiddle_id,
@@ -133,6 +146,23 @@ def save():
     status, fiddle_id = fiddler.save_app(files, deleted_files, fiddle_id=fiddle_id)
     dispatcher.unload_app(fiddle_id)
     return jsonify(status=status, fiddle_id=fiddle_id)
+
+#from flask.ext.validate import type
+#from flask.ext import validate
+
+
+#schema=validate.schema()
+
+@app.route('/save_domains', methods=['POST'])
+#@validate.flask_json(fiddle_id=lid.string(required=True),
+#                     domains=type.array(lid.string(max_length=100), min_length=1, max_length=10))
+#@validate.expand_args()
+def save_domains(fiddle_id, domains):
+    request_json = request.get_json()
+    fiddle_id = request_json.get('fiddle_id', None)
+    domains = request_json['domains']
+    fiddler.set_domains(fiddle_id, domains)
+
 
 
 class SubdomainDispatcher(object):

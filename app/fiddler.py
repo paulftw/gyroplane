@@ -9,6 +9,21 @@ from werkzeug.exceptions import NotFound
 key_alphabet = string.digits + string.lowercase
 key_base = len(key_alphabet)
 
+DEFAULT_APP_ID = 'default-app'
+
+def touch_default_app(files, server_name):
+    default_app = App.get_by_id(DEFAULT_APP_ID)
+    if default_app is not None:
+        def_domain = DEFAULT_APP_ID + '.' + server_name
+        if def_domain not in default_app.domains:
+            default_app.domains.append(def_domain)
+            default_app.put()
+        return
+    default_app = App.get_or_insert(DEFAULT_APP_ID)
+    for f, data in files.items():
+        default_app.write_file(f, data)
+
+
 
 def namespaced(fn):
     from functools import wraps
@@ -51,7 +66,7 @@ class App(ndb.Model):
 
     @namespaced
     def list_files(self):
-        return files.Files.list('/')
+        return files.Files.list('/', recursive=True)
 
     def get_sys_namespace(self):
         return 'gyro_' + self.string_id()
@@ -71,10 +86,13 @@ def id_to_string(x):
 
 
 def string_to_id(s):
-    ret = 0
-    for c in s:
-        ret = ret * key_base + key_alphabet.index(c)
-    return ret
+    try:
+        ret = 0
+        for c in s:
+            ret = ret * key_base + key_alphabet.index(c)
+        return ret
+    except ValueError:
+        return DEFAULT_APP_ID
 
 
 def save_app(files, deleted_files={}, fiddle_id=None):
@@ -87,11 +105,6 @@ def save_app(files, deleted_files={}, fiddle_id=None):
             files['main.py'] = ''
     else:
         new_app = get_app(fiddle_id)
-    for filename, data in files.items():
-        if isinstance(data, dict):
-            assert data['is_binary']
-            data = base64.b64decode(data['data'])
-        new_app.write_file(filename, data)
 
     for filename in deleted_files.keys():
         try:
@@ -99,11 +112,27 @@ def save_app(files, deleted_files={}, fiddle_id=None):
         except:
             # Ignore non-existing file
             pass
+
+    for filename, data in files.items():
+        if isinstance(data, dict):
+            assert data['is_binary']
+            data = base64.b64decode(data['data'])
+        new_app.write_file(filename, data)
+
     return True, new_app.string_id()
 
 
-def get_files(subdomain):
+def save_domains(domains, fiddle_id):
+    if fiddle_id is None:
+        raise error #TODO
+    app = get_app(fiddle_id)
+    app.domains = domains
+    app.put()
+
+
+def get_files_and_domains(subdomain):
     app = get_app(subdomain)
+    domains = app.domains
     file_list = app.list_files()
 
     def get_file_content(filename):
@@ -117,7 +146,7 @@ def get_files(subdomain):
             }
 
     files = dict([(filename[1:], get_file_content(filename)) for filename, file in file_list.items()])
-    return files
+    return files, domains
 
 
 def get_app(fiddle_id):
@@ -139,7 +168,7 @@ def load_app(subdomain, namespace):
     import flask
 
     app_pkg = 'gyro_app_' + ''.join([x if x in key_alphabet else '_' for x in subdomain.lower()])
-    app = flask.Flask(app_pkg)
+    app = flask.Flask(app_pkg, static_folder=None)
     app.config.update(DEBUG=True)
 
     app_data = get_app(subdomain)
@@ -154,6 +183,7 @@ def load_app(subdomain, namespace):
 
 
     def override_send_file(filename):
+        filename = '/static/' + filename
         cache_timeout = app.get_send_file_max_age(filename)
         file = app_data.get_file_obj(filename)
         if not file.exists:
@@ -179,6 +209,10 @@ def load_app(subdomain, namespace):
         return send_file(file, attachment_filename=filename, cache_timeout=cache_timeout, conditional=True)
 
     app.send_static_file = override_send_file
+    app.static_folder = '/static'
+    app.add_url_rule('/static' + '/<path:filename>',
+                              endpoint='static',
+                              view_func=app.send_static_file)
 
     try:
         compiled = compile(app_data.read_file('main.py'), '%s.gyroplane.io/main.py' % subdomain, 'exec')
