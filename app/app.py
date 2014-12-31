@@ -8,6 +8,7 @@ import sys
 sys.path.insert(0, './libs')
 sys.path.insert(0, './libs.zip')
 
+#import dropbox
 from flask import Flask, jsonify, render_template, request, send_from_directory
 from google.appengine.api import namespace_manager
 from threading import Lock
@@ -15,6 +16,12 @@ import logging
 import os
 import re
 from titan import users
+
+#dropbox_app_key = 'ledpbimuh7smq2g'
+#dropbox_app_secret = 'g6z2t8ojqrodlup'
+
+#flow = dropbox.client.DropboxOAuth2FlowNoRedirect(app_key, app_secret)
+
 
 import fiddler
 
@@ -216,7 +223,13 @@ class SubdomainDispatcher(object):
 
     def unload_app(self, domain):
         with self.lock:
-            self.instances.pop(domain, None)
+            inst = self.instances.pop(domain, None)
+            if inst is None:
+                return
+            key = id(inst)
+            for k, v in self.instances.items():
+                if id(v) == key:
+                    self.instances.pop(k, None)
 
 
 root_app = app

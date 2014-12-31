@@ -116,6 +116,8 @@ def save_app(files, deleted_files={}, fiddle_id=None):
     for filename, data in files.items():
         if isinstance(data, dict):
             assert data['is_binary']
+            if data.get('is_lazy', False):
+                continue
             data = base64.b64decode(data['data'])
         new_app.write_file(filename, data)
 
@@ -132,7 +134,7 @@ def save_domains(domains, fiddle_id):
 
 def get_files_and_domains(subdomain):
     app = get_app(subdomain)
-    domains = app.domains
+    logging.warn('app %s   domains: %s', subdomain, app.domains)
     file_list = app.list_files()
 
     def get_file_content(filename):
@@ -140,13 +142,17 @@ def get_files_and_domains(subdomain):
         try:
             return unicode(content)
         except UnicodeDecodeError:
-            return {
+            res = {
                 'is_binary': True,
                 'data': base64.standard_b64encode(content),
             }
+            if len(res['data']) > 32 * 1024:
+                res['data'] = ''
+                res['is_lazy'] = True
+            return res
 
     files = dict([(filename[1:], get_file_content(filename)) for filename, file in file_list.items()])
-    return files, domains
+    return files, app.domains
 
 
 def get_app(fiddle_id):
@@ -175,6 +181,7 @@ def load_app(subdomain, namespace):
 
     if app_data is None:
         return app
+    logging.warn('app %s   domains: %s', subdomain, app_data.domains)
 
     def tpl_loader(name):
         return app_data.read_file(name)
