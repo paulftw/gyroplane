@@ -164,11 +164,12 @@ def save():
 #@validate.flask_json(fiddle_id=lid.string(required=True),
 #                     domains=type.array(lid.string(max_length=100), min_length=1, max_length=10))
 #@validate.expand_args()
-def save_domains(fiddle_id, domains):
+def save_domains():
     request_json = request.get_json()
     fiddle_id = request_json.get('fiddle_id', None)
     domains = request_json['domains']
-    fiddler.set_domains(fiddle_id, domains)
+    fiddler.save_domains(fiddle_id, domains)
+    return 'OK'
 
 
 
@@ -192,43 +193,44 @@ class SubdomainDispatcher(object):
             return ''
         return app_domain
 
-    def get_application(self, subdomain, namespace):
+    def get_application(self, subdomain, url):
+        if url.startswith('/_titan/'):
+            return None, None
+            from titan.files.handlers import application
+            application.get_sys_namespace = lambda: subdomain
+            return application
+        if url.startswith('/echoecho/'):
+            return echo, None
+
         with self.lock:
-            app = self.instances.get(subdomain)
+            app, namespace = self.instances.get(subdomain, (None, None))
             if app is None:
-                app = self.create_app(subdomain, namespace)
-                self.instances[subdomain] = app
-            return app
+                app, is_default, namespace = self.create_app(subdomain)
+                if not is_default:
+                    self.instances[subdomain] = (app, namespace)
+            return app, namespace
 
     def __call__(self, environ, start_response):
         namespace_manager.set_namespace("")
         app_domain = self.get_subdomain(environ['HTTP_HOST'])
         if app_domain == 'www':
             app_domain = ''
-        if app_domain in ['', 'www']:
-            namespace = ''
-        else:
-            namespace = 'gyro_' + app_domain.replace('.', '_').replace('-', '_').replace(':', '_')
         try:
-            sub_app = self.get_application(app_domain, namespace)
-            if hasattr(sub_app, 'get_sys_namespace'):
-                namespace_manager.set_namespace(sub_app.get_sys_namespace())
+            sub_app, namespace = self.get_application(app_domain, url=environ['PATH_INFO'])
+            if namespace is not None:
+                namespace_manager.set_namespace(namespace)
             return sub_app(environ, start_response)
         finally:
             namespace_manager.set_namespace("")
 
-    def insert_app(self, domain, app):
+    def insert_app(self, domain, app, namespace=None):
         with self.lock:
-            self.instances[domain] = app
+            self.instances[domain] = (app, namespace)
 
-    def unload_app(self, domain):
+    def unload_app(self, fiddle_id):
         with self.lock:
-            inst = self.instances.pop(domain, None)
-            if inst is None:
-                return
-            key = id(inst)
             for k, v in self.instances.items():
-                if id(v) == key:
+                if v[1] is not None and v[1].endswith(fiddle_id):
                     self.instances.pop(k, None)
 
 
@@ -240,3 +242,10 @@ dispatcher.insert_app(ROOT_DOMAIN, root_app)
 
 # Make dispatcher the server's entry point
 app = dispatcher
+
+
+def echo(environ, start_response):
+    status = '200 OK'
+    response_headers = [('Content-type', 'text/plain')]
+    start_response(status, response_headers)
+    return map(lambda x: str(x) + '\n', environ.items())

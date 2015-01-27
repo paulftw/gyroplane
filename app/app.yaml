@@ -9,5 +9,9 @@ libraries:
   version: latest 
 
 handlers:
+- url: /echoecho/.*
+  secure: optional
+  script: app.echo
+
 - url: .*
   script: app.app

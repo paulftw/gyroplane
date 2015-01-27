@@ -45,17 +45,6 @@
             });
         };
 
-        $scope.save_domains = function() {
-            $http.post('/save_domains', {
-                    domains: $scope.domains,
-                    fiddle_id: $scope.fiddle_id
-            }).success(function(data, status, headers, config) {
-                console.log('domains saved');
-            }).error(function() {
-                console.log('error', arguments);
-            });
-        };
-
         $scope.url_prefix = function() {
             return 'http://' + $scope.fiddle_id + '.' + SERVER_NAME + '';
         };
@@ -177,9 +166,58 @@
         };
 
         $scope.add_new_domain = function() {
-            $scope.domains.push('example' + fiddle_id + '.com');
-            $scope.save_domains();
+            var new_domain = 'example-' + $scope.fiddle_id + '.com';
+            $scope.domains.push(new_domain);
+            $scope.edit_domain(new_domain);
         };
+
+        $scope.edit_domain = function(domain) {
+            $scope.editing_domain = $scope.editing_domain || {};
+            $scope.editing_domain.from = domain;
+            $scope.editing_domain.index = domain;
+            $scope.editing_domain.to = domain;
+            $focus('renaming_domain');
+        };
+
+        $scope.domain_keydown = function(event) {
+            if (!$scope.editing_domain || !$scope.editing_domain.from) {
+                return;
+            }
+            if (event.keyCode == 13) {
+                var new_name = $scope.editing_domain.to;
+                var old_name = $scope.editing_domain.from;
+                if (new_name == old_name) {
+                    $scope.editing_domain = {};
+                    return;
+                }
+                if ($scope.domains.indexOf(new_name) > -1) {
+                    alert('This domain already exists');
+                    $scope.editing_domain = {};
+                    return;
+                }
+                $scope.domains[$scope.domains.indexOf(old_name)] = new_name;
+                $scope.editing_domain = {};
+                $scope.save_domains();
+                return;
+            }
+            if (event.keyCode == 27) {
+                $scope.editing_domain = {};
+            }
+        };
+
+
+        $scope.save_domains = function() {
+            $http.post('/save_domains', {
+                    domains: $scope.domains,
+                    fiddle_id: $scope.fiddle_id
+            }).success(function(data, status, headers, config) {
+                console.log('domains saved');
+            }).error(function() {
+                console.log('error', arguments);
+            });
+        };
+
+
     });
 
 
@@ -196,7 +234,7 @@
 
     module.factory('$focus', function ($rootScope, $timeout) {
       return function(name) {
-        $timeout(function (){
+        $timeout(function () {
           $rootScope.$broadcast('focusOn', name);
         });
       }

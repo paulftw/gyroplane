@@ -72,7 +72,14 @@
                             </a>
                             <ul class="treeview-menu">
                                 <li ng-repeat="domain in domains" class="active file-control">
-                                    <a href="#" ng-click="edit_domain($index, domain)">{{ domain }}</a>
+                                    <a ng-click="edit_domain(domain)" href="#">
+                                        <span ng-if="editing_domain.from != domain">{{ domain }}</span>
+                                        <input ng-if="editing_domain.from == domain" type="text"
+                                               ng-model="editing_domain.to"
+                                               ng-keydown="domain_keydown($event)"
+                                               focus-on="renaming_domain" />
+                                    </a>
+
                                 </li>
 
                                 <li class="file-control">
