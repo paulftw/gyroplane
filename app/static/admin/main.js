@@ -87,7 +87,10 @@
                 }
                 filename = "new_file." + filename;
             }
-            $scope.files[filename] = '<type something awesome>';
+            $scope.files[filename] = {
+                is_binary: false,
+                content: '<type something awesome>'
+            };
             $scope.active_file = filename;
             $scope.rename_file(filename);
         };
@@ -157,7 +160,7 @@
                     }
                     $scope.files[fileItem.file.name] = {
                         is_binary: true,
-                        data: btoa(evt.target.result),
+                        content: btoa(evt.target.result),
                     };
                 });
             };

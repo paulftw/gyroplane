@@ -69,11 +69,11 @@ class App(ndb.Model):
     def get_file_obj(self, name):
         if not name.startswith('/'):
             name = '/' + name
-        return files.File(name, namespace=namespace_manager.get_namespace())
+        return files.File(name, namespace=self.get_sys_namespace())
 
     @namespaced
     def list_files(self):
-        return files.Files.list('/', recursive=True)
+        return files.Files.list('/', recursive=True, namespace=self.get_sys_namespace())
 
     def get_sys_namespace(self):
         return 'gyro_' + self.string_id()
@@ -124,13 +124,13 @@ def save_app(files, deleted_files={}, fiddle_id=None):
             # Ignore non-existing file
             pass
 
-    for filename, data in files.items():
-        if isinstance(data, dict):
-            assert data['is_binary']
-            if data.get('is_lazy', False):
-                continue
-            data = base64.b64decode(data['data'])
-        new_app.write_file(filename, data)
+    for filename, file_dict in files.items():
+        if file_dict.get('is_lazy', False):
+            continue
+        logging.info('file keys are %s  -> %s', filename, file_dict.keys())
+        if file_dict.get('is_binary', False):
+            file_dict['content'] = base64.b64decode(file_dict['content'])
+        new_app.write_file(filename, file_dict['content'])
 
     return True, new_app.string_id()
 
@@ -145,25 +145,31 @@ def save_domains(fiddle_id, domains):
     app.put()
 
 
-def get_files_and_domains(subdomain):
+def get_files_and_domains(subdomain, include_blobs=False):
     app = get_app(subdomain)
     file_list = app.list_files()
 
-    def get_file_content(filename):
-        content = app.read_file(filename)
+    def get_file_content(filename, file):
+        content = file.read()
+        is_binary = True
+        is_lazy = False
         try:
-            return unicode(content)
+            is_binary = False
+            content = unicode(content)
         except UnicodeDecodeError:
-            res = {
-                'is_binary': True,
-                'data': base64.standard_b64encode(content),
-            }
-            if len(res['data']) > 32 * 1024:
-                res['data'] = ''
-                res['is_lazy'] = True
-            return res
+            is_binary = True
+            content = base64.standard_b64encode(content)
+            if len(content) > 32 * 1024 and not include_blobs:
+                content = ''
+                is_lazy = True
+        return dict(
+                is_binary=is_binary,
+                content=content,
+                paths=file.paths,
+                is_lazy=is_lazy,
+                )
 
-    files = dict([(filename[1:], get_file_content(filename)) for filename, file in file_list.items()])
+    files = dict([(filename[1:], get_file_content(filename, file)) for filename, file in file_list.items()])
     return files, app.domains
 
 

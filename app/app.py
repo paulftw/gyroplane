@@ -9,7 +9,7 @@ sys.path.insert(0, './libs')
 sys.path.insert(0, './libs.zip')
 
 #import dropbox
-from flask import Flask, jsonify, render_template, request, send_from_directory
+from flask import Flask, jsonify, render_template, request, send_file, send_from_directory
 from google.appengine.api import namespace_manager
 from threading import Lock
 import logging
@@ -27,7 +27,7 @@ import fiddler
 
 
 DEFAULT_FILES = {
-    'main.py':
+    'main.py': { 'content':
 """from flask import render_template
 
 @app.route('/')
@@ -43,21 +43,23 @@ def counter():
     view_count = view_count + 1
     return render_template('counter.html', counter=view_count)
 
-""",
-    'main.html':
+"""},
+
+    'main.html': { 'content':
 """<h1>Hello World!</h1>
 <p>
     Try <a href=/counter>counter</a>
 </p>
-""",
-    'counter.html':
+"""},
+
+    'counter.html': { 'content':
 """<p>This page has been visited {{ counter }} time(s)</p>
 <a href=/counter>Refresh</a>
 """,
     'static/css/style.css':
 """html {
     background-color: #eee;
-}"""
+}"""},
 }
 
 
@@ -138,6 +140,24 @@ def root_home(fiddle_id=None):
         login_url=login_url,
         fiddle_id=fiddle_id,
     ))
+
+
+@app.route("/v0/download/<fiddle_id>")
+def download_fiddle(fiddle_id):
+    user = users.get_current_user()
+    authorized = user is not None and user.is_admin
+
+    if not authorized:
+        return 'Downloaded. Not.'
+
+    files, domains = fiddler.get_files_and_domains(fiddle_id, include_blobs=True)
+    import bulker, datetime
+    now = datetime.datetime.now().strftime('%Y.%m.%d')
+    zip_content = bulker.generate_zip(files)
+    return send_file(zip_content,
+                     mimetype='application/octet-stream',
+                     as_attachment=True,
+                     attachment_filename='%s.%s.zip' % (fiddle_id, now))
 
 
 @app.route('/save', methods=['POST'])

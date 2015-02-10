@@ -13,5 +13,9 @@ handlers:
   secure: optional
   script: app.echo
 
+- url: /https/.*
+  secure: always
+  script: app.app
+
 - url: .*
   script: app.app

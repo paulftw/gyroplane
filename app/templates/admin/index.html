@@ -36,6 +36,12 @@
                                     Save
                                 </a>
                             </li>
+                            <li>
+                                <a href="/v0/download/{% context.fiddle_id %}">
+                                    <i class="fa fa-cloud-download"></i>
+                                    Download
+                                </a>
+                            </li>
                             <% endif %>
                         </ul>
                         <% if not context.authorized %>
@@ -153,7 +159,7 @@
             <aside class="flex-main-area">
 
                 <div class="half-column box box-primary">
-                    <div class="ace_editor" ng-model="files[active_file]" ui-ace="{
+                    <div class="ace_editor" ng-model="files[active_file].content" ui-ace="{
                             theme: 'tomorrow',
                             mode: 'python',
                             showGutter: true,
