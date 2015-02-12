@@ -16,7 +16,7 @@ def touch_default_app(files, server_name):
     if default_app is None:
         default_app = App.get_or_insert(DEFAULT_APP_ID)
         for f, data in files.items():
-            default_app.write_file(f, data)
+            default_app.write_file(f, data['content'])
 
     def_domain = DEFAULT_APP_ID + '.' + server_name
     if def_domain not in default_app.domains:
