@@ -15,6 +15,24 @@
     transform: rotate(-90deg);
 }
 
+.sidebar-menu {
+    display: flex;
+    flex-direction: column;
+}
+
+.flex-sidebar.sidebar {
+    display: flex;
+}
+
+.sidebar-menu .treeview.tree-browser.autostretch {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.skin-blue .sidebar {
+    border-bottom-width: 0;
+}
+
 .sidebar .sidebar-menu .treeview.tree-browser > ul.treeview-menu {
     display: block;
     transition: all 200ms ease-in-out;
