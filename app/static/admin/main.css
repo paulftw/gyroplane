@@ -27,6 +27,7 @@
 .sidebar-menu .treeview.tree-browser.autostretch {
     flex: 1;
     overflow-y: auto;
+    overflow-x: visible;
 }
 
 .skin-blue .sidebar {

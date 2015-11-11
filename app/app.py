@@ -8,7 +8,6 @@ import sys
 sys.path.insert(0, './libs')
 sys.path.insert(0, './libs.zip')
 
-#import dropbox
 from flask import Flask, jsonify, render_template, request, send_file, send_from_directory
 from google.appengine.api import namespace_manager
 from threading import Lock
@@ -17,10 +16,11 @@ import os
 import re
 from titan import users
 
-#dropbox_app_key = 'ledpbimuh7smq2g'
-#dropbox_app_secret = 'g6z2t8ojqrodlup'
+import dropbox
+dropbox_app_key = 'ledpbimuh7smq2g'
+dropbox_app_secret = 'g6z2t8ojqrodlup'
 
-#flow = dropbox.client.DropboxOAuth2FlowNoRedirect(app_key, app_secret)
+flow = dropbox.client.DropboxOAuth2FlowNoRedirect(app_key, app_secret)
 
 
 import fiddler
@@ -259,6 +259,7 @@ root_app = app
 dispatcher = SubdomainDispatcher(ROOT_DOMAIN, fiddler.load_app)
 dispatcher.insert_app('', root_app)
 dispatcher.insert_app(ROOT_DOMAIN, root_app)
+dispatcher.insert_app('3-alpha-dot-gyroplaneio.appspot.com', root_app)
 
 # Make dispatcher the server's entry point
 app = dispatcher
