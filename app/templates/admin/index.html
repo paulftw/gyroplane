@@ -42,6 +42,25 @@
                                     Download
                                 </a>
                             </li>
+
+                            <% if dropbox_connected %>
+
+                            <li>
+                                <a href="/dbox_start/{% context.fiddle_id %}">
+                                    <i class="fa fa-dropbox"></i> Connect Dropbox
+                                </a>
+                            </li>
+
+                            <% else %>
+
+                            <li>
+                                <a ng-click="dbox_modal=true" href="#">
+                                    <i class="fa fa-dropbox"></i> Dropbox Sync
+                                </a>
+                            </li>
+
+                            <% endif %>
+
                             <% endif %>
                         </ul>
                         <% if not context.authorized %>
@@ -183,6 +202,81 @@
                 </div>
 
             </aside>
+        </div>
+
+        <div ng-click="dbox_modal=false" class="modal fade in" ng-class="dbox_modal && 'show'" style="">
+            <div class="modal-dialog" ng-click="$event.stopPropagation()">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <button type="button" class="close" ng-click="dbox_modal=false" aria-label="Close">
+                      <span aria-hidden="true">×</span>
+                    </button>
+                    <h4 class="modal-title">Dropbox Sync State</h4>
+                  </div>
+                  <div class="modal-body row">
+                      <div class="col-md-12" ng-if="dropbox_newer.length">
+                          <h4>{{ dropbox_newer.length }} {{ dropbox_newer.length == 1 ? 'file has' : 'files have' }} new revisions in Dropbox</h4>
+                          <h4 ng-if="dropbox_newer.length == 0">No changes in Dropbox since we've last written there</h4>
+                          <div class="treeview tree-browser active">
+                            <ul class="treeview-menu">
+                                <li ng-repeat="f in dropbox_newer" class="file-control active">
+                                    <a>
+                                        <i class="fa fa-file-code-o"></i>
+                                        <span>{{ f }}</span>
+                                    </a>
+                                </li>
+                            </ul>
+                          </div>
+                          <button type="button" class="btn btn-primary" ng-click="load_from_dbox()">
+                              <i class="fa fa-dropbox"></i>
+                              <i class="fa fa-arrow-right"></i>
+                              <svg id="APPENGINE_SECTION" width="16px" height="16px" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fit="" preserveAspectRatio="xMidYMid meet" style="pointer-events: none; display: inline-block; position:relative;top:3px">
+                                <g fill="none" fill-rule="evenodd">
+                                <path d="M0 0h32v32H0z"></path>
+                                <path d="M19.683 12.735L17.73 14.69c.617.503 1.02 1.262 1.02 2.122 0 1.518-1.23 2.75-2.75 2.75-.86 0-1.618-.404-2.123-1.022l-1.953 1.954C12.93 21.607 14.38 22.31 16 22.31c3.038 0 5.5-2.46 5.5-5.498 0-1.62-.704-3.07-1.817-4.077z" fill="#fff"></path>
+                                <path d="M16 6.81c-5.523 0-10 4.477-10 10s4.477 10 10 10 10-4.477 10-10-4.477-10-10-10m0 17.11c-3.927 0-7.11-3.184-7.11-7.11S12.073 9.7 16 9.7c3.927 0 7.11 3.184 7.11 7.11 0 3.927-3.183 7.11-7.11 7.11" fill="#fff"></path>
+                                <path d="M31.39 15.836L27.3 14.55c.17.79.26 1.608.26 2.447 0 .588-.044 1.165-.128 1.728h3.958c.366-.107.61-.334.61-.67v-1.55c0-.336-.244-.57-.61-.67M15.95 5.625c.823 0 1.625.087 2.398.25L16.88 1.8c-.106-.367-.333-.61-.67-.61h-.613c-.337 0-.57.243-.67.61L13.65 5.853c.743-.15 1.512-.23 2.3-.23M4.44 16.998c0-.84.09-1.658.26-2.448L.61 15.836c-.366.1-.61.333-.61.67v1.548c0 .337.244.564.61.67h3.958c-.084-.562-.13-1.14-.13-1.726" fill="#fff"></path>
+                                <path d="M16 12.812c-2.21 0-4 1.79-4 4 0 2.208 1.79 4 4 4s4-1.792 4-4c0-2.21-1.79-4-4-4zm0 6c-1.105 0-2-.896-2-2 0-1.105.895-2 2-2s2 .895 2 2c0 1.104-.895 2-2 2z" fill="#fff"></path>
+                                </g>
+                              </svg>
+                              Download from Dropbox
+                          </button>
+                      </div><!-- /col-md- -->
+                      <div class="col-md-12" ng-if="dropbox_missing.length">
+                          <h4>{{ dropbox_missing.length == 1 ? '1 file' : '' + dropbox_missing.length + ' files' }} are not yet saved to Dropbox</h4>
+                          <h4 ng-if="dropbox_missing.length == 0">Your Dropbox has all the latest files</h4>
+                          <div class="treeview tree-browser active">
+                            <ul class="treeview-menu">
+                                <li ng-repeat="f in dropbox_missing" class="file-control active">
+                                    <a>
+                                        <i class="fa fa-file-code-o"></i>
+                                        <span>{{ f }}</span>
+                                    </a>
+                                </li>
+                            </ul>
+                          </div>
+                          <button type="button" class="btn btn-primary" ng-click="upload_to_dbox()">
+                              <svg id="APPENGINE_SECTION" width="16px" height="16px" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fit="" preserveAspectRatio="xMidYMid meet" style="pointer-events: none; display: inline-block; position:relative;top:3px">
+                                <g fill="none" fill-rule="evenodd">
+                                <path d="M0 0h32v32H0z"></path>
+                                <path d="M19.683 12.735L17.73 14.69c.617.503 1.02 1.262 1.02 2.122 0 1.518-1.23 2.75-2.75 2.75-.86 0-1.618-.404-2.123-1.022l-1.953 1.954C12.93 21.607 14.38 22.31 16 22.31c3.038 0 5.5-2.46 5.5-5.498 0-1.62-.704-3.07-1.817-4.077z" fill="#fff"></path>
+                                <path d="M16 6.81c-5.523 0-10 4.477-10 10s4.477 10 10 10 10-4.477 10-10-4.477-10-10-10m0 17.11c-3.927 0-7.11-3.184-7.11-7.11S12.073 9.7 16 9.7c3.927 0 7.11 3.184 7.11 7.11 0 3.927-3.183 7.11-7.11 7.11" fill="#fff"></path>
+                                <path d="M31.39 15.836L27.3 14.55c.17.79.26 1.608.26 2.447 0 .588-.044 1.165-.128 1.728h3.958c.366-.107.61-.334.61-.67v-1.55c0-.336-.244-.57-.61-.67M15.95 5.625c.823 0 1.625.087 2.398.25L16.88 1.8c-.106-.367-.333-.61-.67-.61h-.613c-.337 0-.57.243-.67.61L13.65 5.853c.743-.15 1.512-.23 2.3-.23M4.44 16.998c0-.84.09-1.658.26-2.448L.61 15.836c-.366.1-.61.333-.61.67v1.548c0 .337.244.564.61.67h3.958c-.084-.562-.13-1.14-.13-1.726" fill="#fff"></path>
+                                <path d="M16 12.812c-2.21 0-4 1.79-4 4 0 2.208 1.79 4 4 4s4-1.792 4-4c0-2.21-1.79-4-4-4zm0 6c-1.105 0-2-.896-2-2 0-1.105.895-2 2-2s2 .895 2 2c0 1.104-.895 2-2 2z" fill="#fff"></path>
+                                </g>
+                              </svg>
+                              <i class="fa fa-arrow-right"></i>
+                              <i class="fa fa-dropbox"></i>
+                              Upload to Dropbox
+                          </button>
+                      </div><!-- /col-md- -->
+                  </div>
+                  <div class="modal-footer">
+                    <!-- <button type="button" class="btn btn-default pull-left" data-dismiss="modal">Close</button> -->
+                  </div>
+                </div>
+                <!-- /.modal-content -->
+            </div>
         </div>
 
 

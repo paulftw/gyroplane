@@ -24,6 +24,52 @@
         };
         $scope.reset_state();
 
+        $scope.apply_sync_state = function(sync_state) {
+            $scope.dropbox_newer = sync_state[0];
+            $scope.dropbox_missing = sync_state[1];
+            $scope.files_total = sync_state[2];
+        };
+        $scope.apply_sync_state(context.sync_state);
+
+        $scope.reload_sync_state = function() {
+            $scope.save_in_progress = true;
+            $http.post('/get_dbox_state', {
+                fiddle_id: $scope.fiddle_id,
+            }).success(function(data, status, headers, config) {
+                $scope.apply_sync_state(data);
+            }).error(function() {
+                console.log('error', arguments);
+                window.location.reload();
+            });
+        };
+        $scope.load_from_dbox = function() {
+            $scope.save_in_progress = true;
+            $http.post('/sync_dbxo', {
+                fiddle_id: $scope.fiddle_id,
+                load_from_dbox: 1,
+            }).success(function(data, status, headers, config) {
+                // TODO: smarter UI update
+                window.location.reload();
+            }).error(function() {
+                console.log('error', arguments);
+                window.location.reload();
+            });
+        };
+        $scope.upload_to_dbox = function() {
+            $scope.save_in_progress = true;
+            $http.post('/sync_dbxo', {
+                fiddle_id: $scope.fiddle_id,
+                load_from_dbox: 1,
+            }).success(function(data, status, headers, config) {
+                // TODO: smarter UI update
+                $scope.save_in_progress = false;
+                window.location.reload();
+            }).error(function() {
+                console.log('error', arguments);
+                window.location.reload();
+            });
+        };
+
         $scope.save = function() {
             mixpanel.track("Saved app");
             $scope.save_in_progress = true;

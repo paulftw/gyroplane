@@ -8,20 +8,13 @@ import sys
 sys.path.insert(0, './libs')
 sys.path.insert(0, './libs.zip')
 
-from flask import Flask, jsonify, render_template, request, send_file, send_from_directory
+from flask import Flask, jsonify, render_template, redirect, request, send_file, send_from_directory, session, url_for
 from google.appengine.api import namespace_manager
 from threading import Lock
 import logging
 import os
 import re
 from titan import users
-
-import dropbox
-dropbox_app_key = 'ledpbimuh7smq2g'
-dropbox_app_secret = 'g6z2t8ojqrodlup'
-
-flow = dropbox.client.DropboxOAuth2FlowNoRedirect(app_key, app_secret)
-
 
 import fiddler
 
@@ -87,6 +80,11 @@ app.config['DEFAULT_PARSERS'] = [
     'flask.ext.api.parsers.MultiPartParser'
 ]
 
+from secrets import FLASK_SECRET_KEY
+app.config['SECRET_KEY'] = FLASK_SECRET_KEY
+
+SERVER_NAME = None
+
 if DEBUG_MODE:
     ROOT_DOMAIN = 'lvh.me'
     #ROOT_DOMAIN = 'localhost'
@@ -100,9 +98,62 @@ else:
 
 fiddler.touch_default_app(DEFAULT_FILES, SERVER_NAME)
 
-#from security import init_security
-#init_security(app)
 
+@app.route("/dbox_start/<fiddle_id>")
+def dbox_start(fiddle_id):
+    from dboxsync import get_dropbox_client, get_dropbox_flow
+    if get_dropbox_client() is None:
+        return redirect(get_dropbox_flow().start(fiddle_id))
+    else:
+        return redirect(url_for('root_home', fiddle_id=fiddle_id))
+
+@app.route("/dbo2")
+def dboxo2():
+    from dboxsync import get_dropbox_flow
+    access_token, user_id, url_state = get_dropbox_flow().finish(request.args)
+    session['dbox-token'] = access_token
+    session['dbox-user-id'] = user_id
+    return redirect("/v0/" + url_state)
+
+
+@app.route('/sync_dbxo', methods=['POST'])
+def sync_dbox():
+    user = users.get_current_user()
+    if user is None or not user.is_admin:
+        return jsonify(status="Not Authorized")
+
+    request_json = request.get_json()
+    fiddle_id = request_json.get('fiddle_id', None)
+
+    user = users.get_current_user()
+    authorized = user is not None and user.is_admin
+    if not authorized:
+        return "NotAuthorized"
+
+    files, domains = fiddler.get_files_and_domains(fiddle_id, include_blobs=True)
+
+    if (request_json.get('load_from_dbox') is not None) and (request_json.get('write_to_dbox') is None):
+        from dboxsync import load_from_dbox
+        return jsonify(loaded_from_dbox=load_from_dbox(fiddle_id, files))
+
+    if (request_json.get('load_from_dbox') is None) and (request_json.get('write_to_dbox') is not None):
+        status, fiddle_id = _do_save(files, {}, fiddle_id=fiddle_id)
+        return jsonify(written_to_dbox=status)
+
+
+@app.route('/get_dbox_state', methods=['POST'])
+def get_dbox():
+    user = users.get_current_user()
+    if user is None or not user.is_admin:
+        return jsonify(status="Not Authorized")
+
+    request_json = request.get_json()
+    fiddle_id = request_json.get('fiddle_id', None)
+
+    files, domains = fiddler.get_files_and_domains(fiddle_id, include_blobs=True)
+
+    from dboxsync import get_sync_state
+    return jsonify(get_sync_state(fiddle_id, files))
 
 @app.route('/favicon.ico')
 def favicon():
@@ -129,8 +180,10 @@ def root_home(fiddle_id=None):
         if authorized:
             files, domains = fiddler.get_files_and_domains(fiddle_id)
         else:
-            files = {'main.py': 'DO NOT SAVE!!!\nNot Authorized to view code. '}
+            files = {'main.py': {'content': 'DO NOT SAVE!!!\nNot Authorized to view code. '}}
             domains = ['example.com']
+
+    from dboxsync import get_sync_state, get_dropbox_client
 
     return render_template('admin/index.html', context=dict(
         SERVER_NAME=SERVER_NAME,
@@ -139,6 +192,8 @@ def root_home(fiddle_id=None):
         authorized=authorized,
         login_url=login_url,
         fiddle_id=fiddle_id,
+        sync_state=get_sync_state(fiddle_id, files),
+        dropbox_connected=get_dropbox_client() is not None
     ))
 
 
@@ -170,9 +225,15 @@ def save():
     fiddle_id = request_json.get('fiddle_id', None)
     files = request_json['files']
     deleted_files = request_json.get('deleted_files', {})
-    status, fiddle_id = fiddler.save_app(files, deleted_files, fiddle_id=fiddle_id)
-    dispatcher.unload_app(fiddle_id)
+
+    status, fiddle_id = _do_save(files, deleted_files, fiddle_id)
     return jsonify(status=status, fiddle_id=fiddle_id)
+
+def _do_save(files, deleted_files, fiddle_id):
+    from dboxsync import get_dropbox_client
+    status, fiddle_id = fiddler.save_app(files, deleted_files, fiddle_id=fiddle_id, dbox_client=get_dropbox_client())
+    dispatcher.unload_app(fiddle_id)
+    return (status, fiddle_id)
 
 #from flask.ext.validate import type
 #from flask.ext import validate

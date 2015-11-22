@@ -1,1 +1,5 @@
-COOKIE_KEY = 'j98jg54oijg45ghroe3049g4g0j43g90j34g09j4t0934jt0934jt90jregoj340943g094390434tg34g43g'
+
+FLASK_SECRET_KEY = 'femo34 340- vvfjkgert9034 34043jkf'
+
+DROPBOX_APP_KEY = 'ledpbimuh7smq2g'
+DROPBOX_APP_SECRET = 'g6z2t8ojqrodlup'

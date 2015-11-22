@@ -47,8 +47,8 @@ class App(ndb.Model):
     fiddle_id = ndb.StringProperty()
 
     @namespaced
-    def write_file(self, name, data):
-        return self.get_file_obj(name).write(data)
+    def write_file(self, name, data, meta=None):
+        return self.get_file_obj(name).write(data, meta=meta)
 
     @namespaced
     def delete_file(self, name):
@@ -81,9 +81,7 @@ class App(ndb.Model):
     @classmethod
     def find_by_domain(cls, domain):
         logging.info('App DB Lookup for domain %s', domain)
-        res = cls.query(cls.domains == domain).get()
-        logging.info('Loaded app %s %s', res, res.key if res is not None else res)
-        return res
+        return cls.query(cls.domains == domain).get()
 
 
 def id_to_string(x):
@@ -102,7 +100,7 @@ def string_to_id(s):
     return ret
 
 
-def save_app(files, deleted_files={}, fiddle_id=None):
+def save_app(files, deleted_files={}, fiddle_id=None, dbox_client=None):
     if 'main.py' in deleted_files:
         del deleted_files['main.py']
     if fiddle_id is None:
@@ -117,20 +115,38 @@ def save_app(files, deleted_files={}, fiddle_id=None):
         new_app.fiddle_id = new_app.string_id()
         new_app.put()
 
+    def map_dbox(filename):
+        return '/' + new_app.fiddle_id + '/' + filename
+
+    def dbox_del(filename):
+        if dbox_client is None:
+            return None
+        return dbox_client.file_delete(map_dbox(filename))
+
+    def dbox_write(filename, data):
+        if dbox_client is None:
+            return None
+        return dbox_client.put_file(map_dbox(filename), data, overwrite=True)
+
     for filename in deleted_files.keys():
         try:
             new_app.delete_file(filename)
+            dbox_del(filename)
         except:
             # Ignore non-existing file
+            logging.exception('Couldnt delete a file')
             pass
 
     for filename, file_dict in files.items():
         if file_dict.get('is_lazy', False):
             continue
-        logging.info('file keys are %s  -> %s', filename, file_dict.keys())
         if file_dict.get('is_binary', False):
             file_dict['content'] = base64.b64decode(file_dict['content'])
-        new_app.write_file(filename, file_dict['content'])
+        meta = dbox_write(filename, file_dict['content'])
+        if meta is not None:
+            meta = {'dbox_revision': meta['revision']}
+        new_app.write_file(filename, file_dict['content'], meta=meta)
+
 
     return True, new_app.string_id()
 
@@ -162,11 +178,13 @@ def get_files_and_domains(subdomain, include_blobs=False):
             if len(content) > 32 * 1024 and not include_blobs:
                 content = ''
                 is_lazy = True
+
         return dict(
                 is_binary=is_binary,
                 content=content,
                 paths=file.paths,
                 is_lazy=is_lazy,
+                dbox_revision=file.meta.dbox_revision if hasattr(file.meta, 'dbox_revision') else None,
                 )
 
     files = dict([(filename[1:], get_file_content(filename, file)) for filename, file in file_list.items()])

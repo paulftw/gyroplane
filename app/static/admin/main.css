@@ -2,7 +2,7 @@
     color: #fff;
 }
 
-.treeview-menu li a {
+.treeview-menu li {
     margin-left: 10px;
 }
 
@@ -24,7 +24,7 @@
     display: flex;
 }
 
-.sidebar-menu .treeview.tree-browser.autostretch {
+.treeview.tree-browser.autostretch {
     flex: 1;
     overflow-y: auto;
     overflow-x: visible;
@@ -34,20 +34,29 @@
     border-bottom-width: 0;
 }
 
-.sidebar .sidebar-menu .treeview.tree-browser > ul.treeview-menu {
+ul.treeview-menu {
+    padding-left: 0;
+}
+
+.treeview.tree-browser > ul.treeview-menu {
     display: block;
     transition: all 200ms ease-in-out;
     max-height: 0;
 }
 
 
-.sidebar .sidebar-menu .treeview.tree-browser.active > ul.treeview-menu {
+.treeview.tree-browser.active > ul.treeview-menu {
     display: block;
     max-height: 5000px;
 }
 
 .treeview.tree-browser li.active {
     background-color: #fff;
+}
+
+.treeview-menu .dropdown-menu {
+    left: auto;
+    right: 0;
 }
 
 .box {
@@ -81,7 +90,7 @@ body {
 }
 
 aside.flex-sidebar {
-    width: 220px;
+    width: 240px;
     padding: 8px 0;
 }
 
@@ -122,6 +131,9 @@ li:hover > .dropdown.file-settings, li > .dropdown.file-settings.open {
     display: block;
 }
 
+div.modal.fade.in {
+    background-color: rgba(0,0,0,.3);
+}
 
 aside.flex-main-area .half-column.vertical {
     flex-direction: column;

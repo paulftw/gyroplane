@@ -7,6 +7,8 @@ threadsafe: no
 libraries:                                                                      
 - name: markupsafe                                                              
   version: latest 
+- name: ssl
+  version: latest
 
 handlers:
 - url: /echoecho/.*
@@ -19,3 +21,4 @@ handlers:
 
 - url: .*
   script: app.app
+
