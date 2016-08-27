@@ -2,9 +2,11 @@
 import dropbox
 from flask import session
 from logging import info
+from google.appengine.api import urlfetch
 
 from secrets import DROPBOX_APP_KEY, DROPBOX_APP_SECRET
 
+urlfetch.set_default_fetch_deadline(55)
 
 def get_dropbox_flow():
     from app import SERVER_NAME
@@ -98,9 +100,11 @@ def get_folder_recursive(skipchars, path):
 
 
 def get_sync_state(fiddle_id, files):
+    if fiddle_id is None:
+        return ([],[],0)
     client = get_dropbox_client()
     if client is None:
-        return 'no dbox'
+        return ([],[],0)
 
     all_files = get_folder_recursive(len(fiddle_id)+2, '/' + fiddle_id)
     info('files = %s\n', '\n'.join(map(str, all_files)))
@@ -131,7 +135,7 @@ def load_from_dbox(fiddle_id, files):
 
     newer_files = {}
     client = get_dropbox_client()
-    for fname in dbox_newer:
+    for fname in dbox_newer[:10]:
         resp, metadata = client.get_file_and_metadata('/%s/%s' % (fiddle_id, fname))
         newer_files[fname] = {
             'revision': metadata['revision'],
